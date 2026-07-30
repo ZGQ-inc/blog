@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="mdui-theme-auto">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -20,204 +20,162 @@
   <!-- Canonical -->
   <link rel="canonical" href="<%= config.url + url_for(page.path) %>">
 
-  <!-- MDUI 2 — Material Design Web Components (零框架依赖) -->
-  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
-  <script src="https://unpkg.com/mdui@2/mdui.global.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
-  <!-- 液态玻璃光学 CSS + M3 设计系统 -->
-  <link rel="stylesheet" href="/css/liquid-glass.css">
+  <!-- Material Web Components -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@material/web/": "https://esm.run/@material/web/"
+      }
+    }
+  </script>
+  <script type="module">
+      import '@material/web/all.js';
+  </script>
+
+  <!-- M3 Style -->
+  <link rel="stylesheet" href="/css/m3-glassmorphism.css">
 </head>
 
-<body class="mdui-theme-auto">
+<body>
 
-  <!-- Phase 1: 挂载 SVG 光学管线定义 (display:none 不占位) -->
-  <%- partial('partial/svg-filters') %>
+  <div class="app-layout">
+    
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-  <!-- ═══ MDUI Layout Shell ════════════════════════════════════════════════════ -->
-  <mdui-layout id="app-layout">
+    <!-- Glassmorphism Sidebar -->
+    <aside class="glass-sidebar" id="nav-drawer">
+      <div class="sidebar-header">
+        <span class="sidebar-title"><%= config.title %></span>
+        <md-icon-button class="sidebar-close-btn hidden-desktop" onclick="toggleSidebar()" style="display:none;">
+          <md-icon>close</md-icon>
+        </md-icon-button>
+      </div>
 
-    <!-- ── Top App Bar ───────────────────────────────────────────────────────── -->
-    <mdui-top-app-bar
-      id="top-app-bar"
-      class="liquid-glass-panel"
-      scroll-behavior="elevate"
-      scroll-target="window"
-      order="0">
-
-      <!-- Hamburger — opens navigation drawer -->
-      <mdui-button-icon
-        id="nav-drawer-toggle"
-        icon="menu--rounded"
-        aria-label="打开导航菜单"
-        slot=""
-        onclick="document.getElementById('nav-drawer').open = !document.getElementById('nav-drawer').open">
-      </mdui-button-icon>
-
-      <!-- Site title / Logo -->
-      <mdui-top-app-bar-title>
-        <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-0.01em;">
-          <span style="background:linear-gradient(135deg,hsl(250,80%,70%),hsl(175,70%,60%));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-            <%= config.title %>
-          </span>
+      <nav class="sidebar-nav">
+        <a href="/" class="sidebar-link <%= page.path === '' || page.path === 'index.html' ? 'active' : '' %>">
+          <span class="native-icon">home</span>主页
         </a>
-      </mdui-top-app-bar-title>
+        <a href="/archives/" class="sidebar-link <%= page.layout === 'archive' ? 'active' : '' %>">
+          <span class="native-icon">library_books</span>文章归档
+        </a>
+        <a href="/tags/" class="sidebar-link <%= page.layout === 'tag' ? 'active' : '' %>">
+          <span class="native-icon">label</span>标签云
+        </a>
+        <a href="/forum/" class="sidebar-link <%= page.path === 'forum/index.html' ? 'active' : '' %>">
+          <span class="native-icon">forum</span>TG 讨论区
+        </a>
+        <a href="/atom.xml" class="sidebar-link" target="_blank">
+          <span class="native-icon">rss_feed</span>RSS 订阅
+        </a>
+      </nav>
 
-      <!-- Spacer -->
       <div style="flex:1;"></div>
 
-      <!-- Dark mode toggle -->
-      <mdui-tooltip content="切换主题" placement="bottom">
-        <mdui-button-icon
-          id="theme-toggle-btn"
-          icon="dark_mode--rounded"
-          aria-label="切换深色/浅色主题">
-        </mdui-button-icon>
-      </mdui-tooltip>
+      <div class="sidebar-footer">
+        <a href="https://t.me/<%= config.telegram_channel || 'your_channel' %>" class="sidebar-link" target="_blank" style="margin-bottom:8px;">
+          <span class="native-icon">send</span>Telegram 频道
+        </a>
+        <a href="/admin/" class="sidebar-link">
+          <span class="native-icon">admin_panel_settings</span>管理后台
+        </a>
+      </div>
+    </aside>
 
-      <!-- Search -->
-      <mdui-tooltip content="搜索" placement="bottom">
-        <mdui-button-icon icon="search--rounded" aria-label="搜索"></mdui-button-icon>
-      </mdui-tooltip>
-
-    </mdui-top-app-bar>
-
-    <!-- ── Navigation Drawer ─────────────────────────────────────────────────── -->
-    <mdui-navigation-drawer
-      id="nav-drawer"
-      close-on-overlay-click
-      close-on-esc
-      order="1"
-      style="--mdui-comp-navigation-drawer-container-color: transparent;">
-
-      <div style="padding:16px 8px 8px; display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:1.1rem;font-weight:700;padding-left:12px;opacity:0.9;">ZGQ Blog</span>
-        <mdui-button-icon
-          icon="close--rounded"
-          onclick="document.getElementById('nav-drawer').open = false">
-        </mdui-button-icon>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Sticky Area (Navbar) -->
+      <div class="top-sticky-area">
+        <header>
+          <div class="header-title-group">
+            <md-icon-button class="hamburger-btn" onclick="toggleSidebar()" style="margin-right:8px;">
+              <md-icon>menu</md-icon>
+            </md-icon-button>
+            <h1 class="mobile-only-title"><a href="/"><%= config.title %></a></h1>
+            <div class="header-pill hidden-mobile">
+              <span class="native-icon" style="font-size:14px;">bolt</span>
+              <span style="font-size:12px;opacity:0.8;">Edge Computing</span>
+            </div>
+          </div>
+          
+          <div class="header-actions">
+            <md-icon-button id="theme-toggle-btn">
+              <md-icon>dark_mode</md-icon>
+            </md-icon-button>
+          </div>
+        </header>
       </div>
 
-      <mdui-divider></mdui-divider>
+      <div class="container">
+        <%- body %>
+      </div>
 
-      <mdui-list style="padding: 8px;">
-        <mdui-list-item
-          icon="home--rounded"
-          href="/"
-          rounded
-          <%- page.path === '' || page.path === 'index.html' ? 'active' : '' %>>
-          主页
-        </mdui-list-item>
-        <mdui-list-item
-          icon="library_books--rounded"
-          href="/archives/"
-          rounded
-          <%- page.layout === 'archive' ? 'active' : '' %>>
-          文章归档
-        </mdui-list-item>
-        <mdui-list-item
-          icon="label--rounded"
-          href="/tags/"
-          rounded
-          <%- page.layout === 'tag' ? 'active' : '' %>>
-          标签云
-        </mdui-list-item>
-        <mdui-list-item
-          icon="forum--rounded"
-          href="/forum/"
-          rounded
-          <%- page.path === 'forum/index.html' ? 'active' : '' %>>
-          <span>TG 讨论区</span>
-          <span class="live-dot" slot="end-icon" title="实时同步中"></span>
-        </mdui-list-item>
-        <mdui-list-item
-          icon="rss_feed--rounded"
-          href="/atom.xml"
-          rounded
-          target="_blank">
-          RSS 订阅
-        </mdui-list-item>
-      </mdui-list>
-
-      <mdui-divider></mdui-divider>
-
-      <!-- Telegram channel link -->
-      <mdui-list style="padding: 8px;">
-        <mdui-list-item
-          icon="telegram"
-          href="https://t.me/<%= config.telegram_channel || 'your_channel' %>"
-          rounded
-          target="_blank">
-          Telegram 频道
-        </mdui-list-item>
-        <mdui-list-item
-          icon="admin_panel_settings--rounded"
-          href="/admin/"
-          rounded>
-          管理后台
-        </mdui-list-item>
-      </mdui-list>
-    </mdui-navigation-drawer>
-
-    <!-- ── Main Content Area ─────────────────────────────────────────────────── -->
-    <mdui-layout-main>
-      <div class="site-main">
-        <div class="site-container">
-          <%- body %>
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div class="cc-logo">
+          <span>© <%= new Date().getFullYear() %></span>
+          <a href="/">ZGQ Inc.</a>
         </div>
-      </div>
-
-      <!-- ── Site Footer ────────────────────────────────────────────────────── -->
-      <footer class="site-footer">
-        <p>
-          © <%= new Date().getFullYear() %>
-          <strong>ZGQ Inc.</strong> &nbsp;·&nbsp;
-          Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> &nbsp;·&nbsp;
-          Hosted on <a href="https://pages.cloudflare.com" target="_blank" rel="noopener">Cloudflare Pages</a>
-        </p>
-        <p style="opacity:0.6;font-size:0.8rem;margin-top:4px;">
-          Serverless · No VPS · Pure Edge Computing
-        </p>
+        <div style="opacity:0.8;">Serverless · No VPS · Pure Edge Computing</div>
+        <div class="footer-links">
+          <a href="/atom.xml" class="footer-link">
+            <span class="native-icon">rss_feed</span> RSS
+          </a>
+          <a href="https://t.me/<%= config.telegram_channel || 'your_channel' %>" class="footer-link" target="_blank">
+            <span class="native-icon">send</span> Telegram
+          </a>
+          <a href="https://hexo.io" class="footer-link" target="_blank">
+            <span class="native-icon">code</span> Hexo
+          </a>
+        </div>
       </footer>
-    </mdui-layout-main>
+    </div>
+  </div>
 
-  </mdui-layout>
-
-  <!-- ── Floating Action Button: Scroll to Top ──────────────────────────────── -->
-  <mdui-fab
-    id="fab-scroll-top"
-    icon="keyboard_arrow_up--rounded"
-    aria-label="返回顶部"
-    onclick="window.scrollTo({top:0,behavior:'smooth'})">
-  </mdui-fab>
-
-  <!-- ── Global Scripts ─────────────────────────────────────────────────────── -->
+  <!-- Global Scripts -->
   <script>
-    // ── Theme Toggle ────────────────────────────────────────────────────────
-    const themeBtn = document.getElementById('theme-toggle-btn');
-    const html = document.documentElement;
+    // Sidebar Toggle
+    function toggleSidebar() {
+      const drawer = document.getElementById('nav-drawer');
+      const overlay = document.getElementById('sidebar-overlay');
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
 
+    // Theme Toggle
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    
     function applyTheme(theme) {
-      mdui.setTheme(theme);
-      themeBtn.icon = theme === 'dark' ? 'light_mode--rounded' : 'dark_mode--rounded';
+      if (theme === 'dark') {
+        html.setAttribute('data-theme', 'dark');
+        themeBtn.innerHTML = '<md-icon>light_mode</md-icon>';
+      } else {
+        html.removeAttribute('data-theme');
+        themeBtn.innerHTML = '<md-icon>dark_mode</md-icon>';
+      }
       localStorage.setItem('zgq-theme', theme);
     }
 
-    // Init from localStorage or system preference
     const savedTheme = localStorage.getItem('zgq-theme') ||
       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     applyTheme(savedTheme);
 
     themeBtn.addEventListener('click', () => {
-      const current = mdui.getTheme();
-      applyTheme(current === 'dark' ? 'light' : 'dark');
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      applyTheme(isDark ? 'light' : 'dark');
     });
 
-    // ── FAB Scroll to Top ────────────────────────────────────────────────────
-    const fab = document.getElementById('fab-scroll-top');
-    window.addEventListener('scroll', () => {
-      fab.classList.toggle('visible', window.scrollY > 300);
-    }, { passive: true });
+    // Close sidebar when window resizes to desktop view
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 900) {
+        document.getElementById('nav-drawer').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('active');
+      }
+    });
   </script>
 
 </body>

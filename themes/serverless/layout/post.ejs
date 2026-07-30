@@ -1,17 +1,17 @@
 <%
-/* post.ejs — Article page with Liquid Glass card + Twikoo D1 comments */
+/* post.ejs — Article page */
 %>
 
-<div class="article-wrapper fade-in-up">
+<div class="container fade-in-up">
 
   <!-- ── Breadcrumb ──────────────────────────────────────────────────────────── -->
-  <nav style="display:flex;align-items:center;gap:8px;font-size:0.85rem;opacity:0.65;margin-bottom:32px;">
+  <nav style="display:flex;align-items:center;gap:8px;font-size:0.85rem;opacity:0.65;margin-bottom:24px;">
     <a href="/" style="color:inherit;text-decoration:none;">主页</a>
-    <mdui-icon name="chevron_right--rounded" style="font-size:16px;"></mdui-icon>
+    <span class="native-icon" style="font-size:16px;">chevron_right</span>
     <% if (page.categories && page.categories.length > 0) { %>
       <% page.categories.each(function(cat) { %>
         <a href="<%= url_for(cat.path) %>" style="color:inherit;text-decoration:none;"><%= cat.name %></a>
-        <mdui-icon name="chevron_right--rounded" style="font-size:16px;"></mdui-icon>
+        <span class="native-icon" style="font-size:16px;">chevron_right</span>
       <% }) %>
     <% } %>
     <span style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
@@ -20,78 +20,87 @@
   </nav>
 
   <!-- ── Article Header ─────────────────────────────────────────────────────── -->
-  <header class="article-header liquid-glass-card" style="padding:32px 36px;">
-    <!-- Category + Tags chips -->
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-      <% if (page.categories && page.categories.length > 0) { %>
-        <% page.categories.each(function(cat) { %>
-          <mdui-chip href="<%= url_for(cat.path) %>" icon="folder--outlined">
-            <%= cat.name %>
-          </mdui-chip>
-        <% }) %>
-      <% } %>
-      <% if (page.tags && page.tags.length > 0) { %>
-        <% page.tags.each(function(tag) { %>
-          <mdui-chip href="<%= url_for(tag.path) %>" icon="label--outlined" style="--mdui-comp-chip-container-color:var(--md-sys-color-primary-container);">
-            <%= tag.name %>
-          </mdui-chip>
-        <% }) %>
-      <% } %>
-    </div>
-
-    <!-- Title -->
-    <h1 class="article-title"><%= page.title %></h1>
-
-    <!-- Meta bar -->
-    <div class="article-meta">
-      <!-- Author avatar -->
-      <div class="comment-avatar" style="width:32px;height:32px;font-size:0.8rem;flex-shrink:0;">
-        <%= (page.author || config.author || 'Z').charAt(0).toUpperCase() %>
+  <div class="post-wrapper">
+    <header style="margin-bottom:24px;">
+      <!-- Category + Tags chips -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        <% if (page.categories && page.categories.length > 0) { %>
+          <% page.categories.each(function(cat) { %>
+            <a href="<%= url_for(cat.path) %>" class="native-chip">
+              <span class="native-icon" style="font-size:14px;margin-right:4px;">folder</span>
+              <%= cat.name %>
+            </a>
+          <% }) %>
+        <% } %>
+        <% if (page.tags && page.tags.length > 0) { %>
+          <% page.tags.each(function(tag) { %>
+            <a href="<%= url_for(tag.path) %>" class="native-chip" style="background-color:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);">
+              <span class="native-icon" style="font-size:14px;margin-right:4px;">label</span>
+              <%= tag.name %>
+            </a>
+          <% }) %>
+        <% } %>
       </div>
-      <span style="font-weight:500;"><%= page.author || config.author %></span>
-      <span style="opacity:0.4;">·</span>
-      <mdui-icon name="calendar_today--outlined" style="font-size:14px;"></mdui-icon>
-      <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, 'YYYY-MM-DD') %></time>
-      <% if (page.updated && page.updated.valueOf() !== page.date.valueOf()) { %>
-        <span style="opacity:0.4;">·</span>
-        <mdui-icon name="update--outlined" style="font-size:14px;"></mdui-icon>
-        <time datetime="<%= date_xml(page.updated) %>">更新 <%= date(page.updated, 'MM-DD') %></time>
-      <% } %>
-    </div>
-  </header>
 
-  <!-- ── Article Body ────────────────────────────────────────────────────────── -->
-  <main class="liquid-glass-card article-body" style="margin-top:20px;padding:36px;">
-    <%- page.content %>
-  </main>
+      <!-- Title -->
+      <h1 style="font-size: clamp(1.5rem, 4vw, 2.5rem); margin: 0 0 16px; color: var(--md-sys-color-on-surface);"><%= page.title %></h1>
+
+      <!-- Meta bar -->
+      <div class="meta-icons" style="font-size:0.9rem;">
+        <!-- Author avatar placeholder -->
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:bold;">
+          <%= (page.author || config.author || 'Z').charAt(0).toUpperCase() %>
+        </div>
+        <span style="font-weight:500;margin-right:8px;"><%= page.author || config.author %></span>
+        
+        <div class="meta-item">
+          <span class="native-icon">calendar_today</span>
+          <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, 'YYYY-MM-DD') %></time>
+        </div>
+        <% if (page.updated && page.updated.valueOf() !== page.date.valueOf()) { %>
+          <div class="meta-item" style="margin-left:8px;">
+            <span class="native-icon">update</span>
+            <time datetime="<%= date_xml(page.updated) %>">更新 <%= date(page.updated, 'MM-DD') %></time>
+          </div>
+        <% } %>
+      </div>
+    </header>
+
+    <!-- ── Article Body ────────────────────────────────────────────────────────── -->
+    <main class="post-body">
+      <%- page.content %>
+    </main>
+  </div>
 
   <!-- ── Share & Navigation ─────────────────────────────────────────────────── -->
   <div style="display:flex;justify-content:space-between;margin-top:24px;gap:12px;flex-wrap:wrap;">
     <% if (page.prev) { %>
-      <mdui-button href="<%= url_for(page.prev.path) %>" variant="outlined" icon="arrow_back--rounded" style="flex:1;min-width:0;">
+      <md-outlined-button href="<%= url_for(page.prev.path) %>" style="flex:1;">
+        <md-icon slot="icon">arrow_back</md-icon>
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">
           <%= page.prev.title %>
         </span>
-      </mdui-button>
+      </md-outlined-button>
     <% } else { %><div style="flex:1;"></div><% } %>
     <% if (page.next) { %>
-      <mdui-button href="<%= url_for(page.next.path) %>" variant="outlined" trailing-icon="arrow_forward--rounded" style="flex:1;min-width:0;">
+      <md-outlined-button href="<%= url_for(page.next.path) %>" trailing-icon style="flex:1;">
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">
           <%= page.next.title %>
         </span>
-      </mdui-button>
+        <md-icon slot="icon">arrow_forward</md-icon>
+      </md-outlined-button>
     <% } else { %><div style="flex:1;"></div><% } %>
   </div>
 
   <!-- ═══ Comments Section ════════════════════════════════════════════════════ -->
-  <section class="comments-section liquid-glass-card" style="margin-top:24px;padding:32px 36px;" id="comments">
+  <div class="post-wrapper" style="margin-top: 24px;" id="comments">
 
-    <h2 class="comments-title">
-      <mdui-icon name="comment--outlined" style="font-size:22px;"></mdui-icon>
+    <h2 style="display:flex;align-items:center;gap:8px;font-size:1.3rem;margin:0 0 24px;">
+      <span class="native-icon">comment</span>
       <span id="comment-count">评论</span>
       <!-- Telegram sync indicator -->
-      <span class="live-dot" title="与 Telegram 群组实时同步" style="margin-left:8px;"></span>
-      <span style="font-size:0.8rem;font-weight:400;opacity:0.6;margin-left:4px;">Telegram 同步</span>
+      <span class="live-dot" title="与 Telegram 群组实时同步" style="margin-left:8px;width:8px;height:8px;background:green;border-radius:50%;display:inline-block;"></span>
+      <span style="font-size:0.8rem;font-weight:400;opacity:0.6;">Telegram 同步</span>
     </h2>
 
     <!-- Comment list -->
@@ -101,35 +110,31 @@
     <div style="margin:16px 0;" id="tg-discuss-link"></div>
 
     <!-- Comment form -->
-    <div class="comment-form" id="comment-form-wrapper">
-      <h3 style="grid-column:1/-1;font-size:1rem;font-weight:600;margin:24px 0 8px;">发表评论</h3>
+    <div class="comments-section" id="comment-form-wrapper">
+      <h3 style="font-size:1rem;font-weight:600;margin:0 0 16px;">发表评论</h3>
 
-      <mdui-text-field id="comment-name"   label="昵称 *" required clearable></mdui-text-field>
-      <mdui-text-field id="comment-email"  label="邮箱 (可选)" type="email" clearable></mdui-text-field>
-      <mdui-text-field id="comment-site"   label="网站 (可选)" type="url" clearable></mdui-text-field>
-      <div style="grid-column:1/-1;width:100%;"></div>
-      <mdui-text-field
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+        <md-filled-text-field id="comment-name" label="昵称 *" required style="flex:1;min-width:200px;"></md-filled-text-field>
+        <md-filled-text-field id="comment-email" label="邮箱 (可选)" type="email" style="flex:1;min-width:200px;"></md-filled-text-field>
+        <md-filled-text-field id="comment-site" label="网站 (可选)" type="url" style="flex:1;min-width:200px;"></md-filled-text-field>
+      </div>
+      
+      <md-filled-text-field
         id="comment-content"
         label="评论内容 *"
         required
-        rows="5"
-        max-rows="10"
-        class="comment-textarea"
-        style="grid-column:1/-1;"
-        helper="支持部分 HTML 标签：&lt;a&gt; &lt;strong&gt; &lt;em&gt; &lt;code&gt;"
-      ></mdui-text-field>
+        type="textarea"
+        rows="4"
+        style="width:100%;margin-bottom:16px;"
+      ></md-filled-text-field>
 
-      <div class="comment-submit">
-        <mdui-button
-          id="comment-submit-btn"
-          variant="filled"
-          icon="send--rounded"
-          onclick="submitComment()">
-          提交评论
-        </mdui-button>
+      <div style="display:flex;justify-content:flex-end;">
+        <md-filled-button id="comment-submit-btn" onclick="submitComment()">
+          <md-icon slot="icon">send</md-icon>提交评论
+        </md-filled-button>
       </div>
     </div>
-  </section>
+  </div>
 </div>
 
 <script>
@@ -179,24 +184,22 @@ function renderComments(comments) {
     const children = childrenMap[comment.id] || [];
 
     return `
-      <div class="comment-item ${isAdmin ? 'is-admin' : ''}" id="comment-${comment.id}"
-           style="margin-left:${depth * 24}px;">
-        <div class="comment-avatar">${initials}</div>
-        <div class="comment-body">
-          <div class="comment-author">
+      <div class="forum-item" id="comment-${comment.id}"
+           style="margin-left:${depth * 24}px; display:flex; gap:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0;">${initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:500;font-size:0.95rem;">
             ${comment.author_website
-              ? `<a href="${comment.author_website}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escHtml(comment.author_name)}</a>`
+              ? `<a href="${comment.author_website}" target="_blank" rel="noopener" style="color:var(--md-sys-color-primary);text-decoration:none;">${escHtml(comment.author_name)}</a>`
               : escHtml(comment.author_name)}
-            ${isAdmin ? '<mdui-chip style="height:20px;font-size:0.7rem;margin-left:4px;">博主</mdui-chip>' : ''}
-            <span class="comment-time">${dateStr}</span>
+            ${isAdmin ? '<span class="native-chip" style="font-size:10px;padding:2px 4px;margin-left:4px;background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);">博主</span>' : ''}
+            <span style="font-size:0.8rem;color:var(--md-sys-color-outline);margin-left:8px;">${dateStr}</span>
           </div>
-          <div class="comment-content">${comment.content}</div>
+          <div style="margin-top:4px;font-size:0.95rem;line-height:1.5;">${comment.content}</div>
           <div style="margin-top:8px;">
-            <mdui-button variant="text" style="font-size:0.8rem;padding-left:0;opacity:0.7;"
-              onclick="replyTo('${comment.id}', '${escHtml(comment.author_name)}')">
-              <mdui-icon name="reply--outlined" slot="icon" style="font-size:15px;"></mdui-icon>
-              回复
-            </mdui-button>
+            <md-text-button onclick="replyTo('${comment.id}', '${escHtml(comment.author_name)}')">
+              <md-icon slot="icon">reply</md-icon>回复
+            </md-text-button>
           </div>
         </div>
       </div>
@@ -226,12 +229,11 @@ async function submitComment() {
   const content = document.getElementById('comment-content').value.trim();
 
   if (!name || !content) {
-    mdui.snackbar({ message: '请填写昵称和评论内容', placement: 'bottom' });
+    alert('请填写昵称和评论内容');
     return;
   }
 
   btn.disabled = true;
-  btn.loading = true;
 
   try {
     const res = await fetch(WORKER_BASE + '/twikoo', {
@@ -250,7 +252,7 @@ async function submitComment() {
 
     const result = await res.json();
     if (result.success) {
-      mdui.snackbar({ message: '评论提交成功！', placement: 'bottom' });
+      alert('评论提交成功！');
       document.getElementById('comment-name').value = '';
       document.getElementById('comment-email').value = '';
       document.getElementById('comment-site').value = '';
@@ -259,13 +261,12 @@ async function submitComment() {
       replyingToId = null;
       await loadComments();
     } else {
-      mdui.snackbar({ message: result.error || '提交失败，请重试', placement: 'bottom' });
+      alert(result.error || '提交失败，请重试');
     }
   } catch (err) {
-    mdui.snackbar({ message: '网络错误，请稍后重试', placement: 'bottom' });
+    alert('网络错误，请稍后重试');
   } finally {
     btn.disabled = false;
-    btn.loading = false;
   }
 }
 
@@ -278,10 +279,9 @@ function escHtml(str) {
 const tgLinkEl = document.getElementById('tg-discuss-link');
 if (tgLinkEl && '<%= config.telegram_channel || "" %>') {
   tgLinkEl.innerHTML = `
-    <mdui-button variant="outlined" href="https://t.me/<%= config.telegram_channel || '' %>"
-      target="_blank" icon="telegram">
-      在 Telegram 中讨论
-    </mdui-button>
+    <md-outlined-button href="https://t.me/<%= config.telegram_channel || '' %>" target="_blank">
+      <md-icon slot="icon">send</md-icon>在 Telegram 中讨论
+    </md-outlined-button>
   `;
 }
 

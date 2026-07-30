@@ -6,7 +6,7 @@
 title: ZGQ Blog
 subtitle: Serverless · Liquid Glass · Edge Computing
 description: A serverless blog & forum system powered by Cloudflare Pages, Workers, D1 — with Telegram bi-directional sync and Liquid Glass UI.
-keywords: serverless, blog, cloudflare, worker, d1, telegram, liquid-glass
+keywords: serverless, blog, cloudflare, worker, d1, telegram
 author: ZGQ
 language: zh-CN
 timezone: 'Asia/Shanghai'

@@ -9,11 +9,11 @@ site.posts.sort('date', -1).each(function(post) {
 const years = Object.keys(postsByYear).sort((a, b) => b - a);
 %>
 
-<div class="fade-in-up">
+<div class="fade-in-up container">
   <!-- Page header -->
   <div style="margin-bottom:40px;">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <mdui-icon name="library_books--rounded" style="font-size:2rem;color:var(--md-sys-color-primary);"></mdui-icon>
+      <span class="native-icon" style="font-size:2rem;color:var(--md-sys-color-primary);">library_books</span>
       <h1 style="font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;margin:0;">文章归档</h1>
     </div>
     <p style="opacity:0.6;margin:0;">共 <%= site.posts.length %> 篇文章</p>
@@ -22,54 +22,49 @@ const years = Object.keys(postsByYear).sort((a, b) => b - a);
   <!-- Year sections -->
   <% years.forEach(function(year) { %>
     <section class="archive-year fade-in-up">
-      <h2 class="archive-year-title">
-        <mdui-icon name="event--outlined" style="font-size:1.3rem;"></mdui-icon>
+      <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:16px;color:var(--md-sys-color-primary);display:flex;align-items:center;gap:8px;">
+        <span class="native-icon">event</span>
         <%= year %>
         <span style="font-size:0.9rem;font-weight:400;opacity:0.5;margin-left:8px;">
           <%= postsByYear[year].length %> 篇
         </span>
       </h2>
 
-      <mdui-list>
+      <div style="display:flex;flex-direction:column;gap:12px;">
         <% postsByYear[year].forEach(function(post) { %>
-          <mdui-list-item
-            href="<%= url_for(post.path) %>"
-            rounded
-            style="margin-bottom:4px;"
-            icon="article--outlined">
-
-            <!-- Title slot -->
-            <span style="font-weight:500;"><%= post.title %></span>
-
-            <!-- Date slot -->
-            <span slot="description" style="font-size:0.8rem;opacity:0.6;">
-              <time datetime="<%= date_xml(post.date) %>"><%= date(post.date, 'MM-DD') %></time>
-              <% if (post.categories && post.categories.length > 0) { %>
-                &nbsp;·&nbsp;
-                <% post.categories.each(function(cat) { %>
-                  <%= cat.name %>
-                <% }) %>
-              <% } %>
-            </span>
-
+          <div class="forum-item" style="display:flex;align-items:center;gap:16px;cursor:pointer;margin-bottom:0;" onclick="window.location.href='<%= url_for(post.path) %>'">
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:500;font-size:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= post.title %></div>
+              <div style="font-size:0.85rem;color:var(--md-sys-color-outline);margin-top:4px;">
+                <span class="native-icon" style="font-size:14px;vertical-align:middle;">calendar_today</span>
+                <time datetime="<%= date_xml(post.date) %>"><%= date(post.date, 'MM-DD') %></time>
+                <% if (post.categories && post.categories.length > 0) { %>
+                  &nbsp;·&nbsp;
+                  <% post.categories.each(function(cat) { %>
+                    <%= cat.name %>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+            
             <!-- Tags in end slot -->
-            <div slot="end-icon" style="display:flex;gap:4px;flex-wrap:wrap;max-width:200px;justify-content:flex-end;">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;max-width:200px;justify-content:flex-end;">
               <% if (post.tags && post.tags.length > 0) { %>
                 <% post.tags.toArray().slice(0, 2).forEach(function(tag) { %>
-                  <mdui-chip style="height:20px;font-size:0.72rem;"><%= tag.name %></mdui-chip>
+                  <span class="native-chip"><%= tag.name %></span>
                 <% }) %>
               <% } %>
             </div>
-          </mdui-list-item>
+          </div>
         <% }) %>
-      </mdui-list>
+      </div>
     </section>
   <% }) %>
 
   <% if (years.length === 0) { %>
-    <div class="liquid-glass-card" style="padding:64px;text-align:center;opacity:0.6;">
-      <mdui-icon name="inbox--outlined" style="font-size:3rem;display:block;margin-bottom:16px;"></mdui-icon>
-      <p>暂无归档文章</p>
+    <div class="post-wrapper" style="text-align:center;padding:64px;">
+      <span class="native-icon" style="font-size:3rem;opacity:0.5;margin-bottom:16px;display:block;">inbox</span>
+      <p style="opacity:0.6;">暂无归档文章</p>
     </div>
   <% } %>
 </div>

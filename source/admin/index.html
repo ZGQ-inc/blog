@@ -1,16 +1,32 @@
+---
+title: 管理后台
+layout: false
+---
 <!DOCTYPE html>
-<html lang="zh-CN" class="mdui-theme-auto">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>管理后台 — ZGQ Blog</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
-  <script src="https://unpkg.com/mdui@2/mdui.global.js" defer></script>
-  <link rel="stylesheet" href="/css/liquid-glass.css">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "@material/web/": "https://esm.run/@material/web/"
+      }
+    }
+  </script>
+  <script type="module">
+      import '@material/web/all.js';
+  </script>
+
+  <link rel="stylesheet" href="/css/m3-glassmorphism.css">
   <style>
-    body { background: var(--md-sys-color-background, #0f0f1a); min-height: 100vh; }
+    body { background: var(--md-sys-color-background, #0f0f1a); min-height: 100vh; margin: 0; padding: 0; font-family: Roboto, sans-serif; }
 
     /* Code-mirror-like editor area */
     #md-editor {
@@ -19,7 +35,6 @@
       line-height: 1.7;
       width: 100%;
       min-height: 420px;
-      resize: vertical;
     }
 
     /* Split editor/preview */
@@ -30,13 +45,13 @@
     }
 
     #md-preview {
-      font-family: var(--font-sans, 'Inter', sans-serif);
       font-size: 0.95rem;
       line-height: 1.8;
       padding: 20px;
       min-height: 420px;
-      background: var(--md-sys-color-surface, #111);
-      border: 1px solid var(--md-sys-color-outline-variant, #333);
+      background: var(--md-sys-color-surface-container);
+      color: var(--md-sys-color-on-surface);
+      border: 1px solid var(--md-sys-color-outline-variant);
       border-radius: 12px;
       overflow-y: auto;
     }
@@ -47,8 +62,8 @@
     }
 
     .admin-section {
-      background: var(--glass-bg-light, rgba(255,255,255,0.05));
-      border: 1px solid var(--glass-border, rgba(255,255,255,0.1));
+      background: var(--md-sys-color-surface);
+      border: 1px solid var(--md-sys-color-outline-variant);
       border-radius: 20px;
       padding: 24px;
       margin-bottom: 20px;
@@ -61,140 +76,144 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      opacity: 0.85;
+      color: var(--md-sys-color-primary);
     }
 
     #sha-badge {
       font-family: monospace;
       font-size: 0.75rem;
-      background: var(--md-sys-color-surface-variant, #222);
+      background: var(--md-sys-color-surface-variant);
+      color: var(--md-sys-color-on-surface-variant);
       border-radius: 6px;
       padding: 3px 8px;
-      opacity: 0.7;
       display: none;
     }
   </style>
 </head>
-<body class="mdui-theme-auto">
+<body>
 
   <!-- Auth wall -->
   <div id="auth-wall" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;">
-    <div class="liquid-glass-card" style="max-width:380px;width:100%;padding:40px;text-align:center;">
-      <mdui-icon name="admin_panel_settings--rounded" style="font-size:3rem;color:var(--md-sys-color-primary);"></mdui-icon>
-      <h1 style="font-size:1.4rem;font-weight:700;margin:16px 0 8px;">管理后台</h1>
-      <p style="opacity:0.6;font-size:0.9rem;margin-bottom:24px;">ZGQ Inc. — Serverless Blog Admin</p>
-      <mdui-text-field id="auth-token" label="GitHub PAT Token" type="password" clearable style="width:100%;margin-bottom:16px;"></mdui-text-field>
-      <mdui-button id="auth-btn" variant="filled" style="width:100%;" onclick="authenticate()" icon="login--rounded">
-        登录
-      </mdui-button>
+    <div class="post-wrapper" style="max-width:380px;width:100%;padding:40px;text-align:center;">
+      <span class="native-icon" style="font-size:3rem;color:var(--md-sys-color-primary);">admin_panel_settings</span>
+      <h1 style="font-size:1.4rem;font-weight:700;margin:16px 0 8px;color:var(--md-sys-color-on-surface);">管理后台</h1>
+      <p style="opacity:0.6;font-size:0.9rem;margin-bottom:24px;color:var(--md-sys-color-on-surface);">ZGQ Inc. — Serverless Blog Admin</p>
+      <md-filled-text-field id="auth-token" label="GitHub PAT Token" type="password" style="width:100%;margin-bottom:16px;"></md-filled-text-field>
+      <md-filled-button id="auth-btn" style="width:100%;" onclick="authenticate()">
+        <md-icon slot="icon">login</md-icon>登录
+      </md-filled-button>
     </div>
   </div>
 
   <!-- Main admin panel (hidden until auth) -->
-  <div id="admin-panel" style="display:none;max-width:1100px;margin:0 auto;padding:80px 16px 48px;">
+  <div id="admin-panel" style="display:none;">
 
     <!-- Top App Bar -->
-    <mdui-top-app-bar class="liquid-glass-panel" style="position:fixed;top:0;left:0;right:0;">
-      <mdui-top-app-bar-title>
-        <span style="font-weight:700;">ZGQ Admin</span>
-        <span style="font-size:0.75rem;opacity:0.5;margin-left:8px;">Serverless GitOps</span>
-      </mdui-top-app-bar-title>
-      <div style="flex:1;"></div>
-      <mdui-button-icon icon="home--rounded" href="/" aria-label="返回主页"></mdui-button-icon>
-      <mdui-button-icon id="theme-toggle" icon="dark_mode--rounded" onclick="toggleTheme()"></mdui-button-icon>
-      <mdui-button-icon icon="logout--rounded" onclick="logout()" aria-label="退出登录"></mdui-button-icon>
-    </mdui-top-app-bar>
-
-    <!-- ── File Settings ─────────────────────────────────────────────────────── -->
-    <div class="admin-section">
-      <h2 class="section-title">
-        <mdui-icon name="settings--outlined" style="font-size:18px;"></mdui-icon>
-        发布设置
-      </h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <mdui-text-field id="post-title" label="文章标题 *" clearable required></mdui-text-field>
-        <mdui-text-field id="post-filename" label="文件名 (不含.md)" placeholder="2024-01-my-post" clearable></mdui-text-field>
-        <mdui-text-field id="post-tags" label="标签 (逗号分隔)" placeholder="技术, Cloudflare, Worker" clearable></mdui-text-field>
-        <mdui-text-field id="post-category" label="分类" clearable></mdui-text-field>
-        <mdui-text-field id="post-url" label="文章 URL (用于 TG 广播)" placeholder="https://zgq.blog/2024/..." clearable></mdui-text-field>
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-          <mdui-checkbox id="opt-broadcast" checked>广播到 Telegram</mdui-checkbox>
-          <mdui-checkbox id="opt-draft">草稿模式</mdui-checkbox>
+    <div class="top-sticky-area">
+      <header>
+        <div class="header-title-group">
+          <h1>ZGQ Admin</h1>
+          <div class="header-pill">
+            <span style="font-size:12px;opacity:0.8;">Serverless GitOps</span>
+          </div>
         </div>
-      </div>
-
-      <!-- SHA display (shown in edit mode) -->
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span id="sha-badge">SHA: —</span>
-        <mdui-button id="fetch-sha-btn" variant="text" icon="sync--rounded" style="display:none;" onclick="fetchSHA()">
-          获取最新 SHA
-        </mdui-button>
-      </div>
+        <div class="header-actions">
+          <md-icon-button href="/" aria-label="返回主页">
+            <md-icon>home</md-icon>
+          </md-icon-button>
+          <md-icon-button id="theme-toggle" onclick="toggleTheme()">
+            <md-icon>dark_mode</md-icon>
+          </md-icon-button>
+          <md-icon-button onclick="logout()" aria-label="退出登录">
+            <md-icon>logout</md-icon>
+          </md-icon-button>
+        </div>
+      </header>
     </div>
 
-    <!-- ── Markdown Editor ─────────────────────────────────────────────────── -->
-    <div class="admin-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-        <h2 class="section-title" style="margin:0;">
-          <mdui-icon name="edit--outlined" style="font-size:18px;"></mdui-icon>
-          Markdown 编辑器
+    <div class="container" style="padding-top:40px;">
+      <!-- ── File Settings ─────────────────────────────────────────────────────── -->
+      <div class="admin-section">
+        <h2 class="section-title">
+          <span class="native-icon" style="font-size:18px;">settings</span>发布设置
         </h2>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <mdui-button variant="text" size="small" onclick="insertFrontmatter()" icon="article--outlined">
-            插入 Front-matter
-          </mdui-button>
-          <mdui-tooltip content="切换预览" placement="bottom">
-            <mdui-button-icon icon="preview--rounded" onclick="togglePreview()"></mdui-button-icon>
-          </mdui-tooltip>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <md-filled-text-field id="post-title" label="文章标题 *" required></md-filled-text-field>
+          <md-filled-text-field id="post-filename" label="文件名 (不含.md)" placeholder="2024-01-my-post"></md-filled-text-field>
+          <md-filled-text-field id="post-tags" label="标签 (逗号分隔)" placeholder="技术, Cloudflare, Worker"></md-filled-text-field>
+          <md-filled-text-field id="post-category" label="分类"></md-filled-text-field>
+          <md-filled-text-field id="post-url" label="文章 URL (用于 TG 广播)" placeholder="https://zgq.blog/2024/..."></md-filled-text-field>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-top:8px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--md-sys-color-on-surface);">
+              <md-checkbox id="opt-broadcast" checked></md-checkbox>
+              广播到 Telegram
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--md-sys-color-on-surface);">
+              <md-checkbox id="opt-draft"></md-checkbox>
+              草稿模式
+            </label>
+          </div>
+        </div>
+
+        <!-- SHA display (shown in edit mode) -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="sha-badge">SHA: —</span>
+          <md-text-button id="fetch-sha-btn" style="display:none;" onclick="fetchSHA()">
+            <md-icon slot="icon">sync</md-icon>获取最新 SHA
+          </md-text-button>
         </div>
       </div>
 
-      <div class="editor-split" id="editor-container">
-        <mdui-text-field
-          id="md-editor"
-          label="Markdown 内容 *"
-          rows="20"
-          max-rows="50"
-          required
-          oninput="updatePreview()"
-          style="width:100%;"
-          helper="支持标准 Markdown + Front-matter">
-        </mdui-text-field>
-        <div id="md-preview">
-          <p style="opacity:0.4;text-align:center;">开始输入 Markdown...</p>
+      <!-- ── Markdown Editor ─────────────────────────────────────────────────── -->
+      <div class="admin-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+          <h2 class="section-title" style="margin:0;">
+            <span class="native-icon" style="font-size:18px;">edit</span>Markdown 编辑器
+          </h2>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <md-text-button onclick="insertFrontmatter()">
+              <md-icon slot="icon">article</md-icon>插入 Front-matter
+            </md-text-button>
+            <md-icon-button onclick="togglePreview()" title="切换预览">
+              <md-icon>preview</md-icon>
+            </md-icon-button>
+          </div>
+        </div>
+
+        <div class="editor-split" id="editor-container">
+          <md-filled-text-field
+            id="md-editor"
+            label="Markdown 内容 *"
+            type="textarea"
+            rows="20"
+            required
+            oninput="updatePreview()"
+            style="width:100%;">
+          </md-filled-text-field>
+          <div id="md-preview">
+            <p style="opacity:0.4;text-align:center;">开始输入 Markdown...</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
-    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;">
-      <mdui-button
-        id="btn-new-post"
-        variant="outlined"
-        icon="add--rounded"
-        onclick="newPost()">
-        新建文章
-      </mdui-button>
-      <mdui-button
-        id="btn-fetch-sha"
-        variant="outlined"
-        icon="sync--rounded"
-        onclick="fetchSHA()">
-        获取 SHA (编辑模式)
-      </mdui-button>
-      <mdui-button
-        id="btn-publish"
-        variant="filled"
-        icon="publish--rounded"
-        onclick="publishPost()">
-        发布文章
-      </mdui-button>
-    </div>
+      <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;">
+        <md-outlined-button id="btn-new-post" onclick="newPost()">
+          <md-icon slot="icon">add</md-icon>新建文章
+        </md-outlined-button>
+        <md-outlined-button id="btn-fetch-sha" onclick="fetchSHA()">
+          <md-icon slot="icon">sync</md-icon>获取 SHA (编辑模式)
+        </md-outlined-button>
+        <md-filled-button id="btn-publish" onclick="publishPost()">
+          <md-icon slot="icon">publish</md-icon>发布文章
+        </md-filled-button>
+      </div>
 
-    <!-- ── Status Log ─────────────────────────────────────────────────────── -->
-    <div id="status-log" class="admin-section" style="margin-top:20px;font-family:monospace;font-size:0.85rem;max-height:200px;overflow-y:auto;display:none;">
-    </div>
+      <!-- ── Status Log ─────────────────────────────────────────────────────── -->
+      <div id="status-log" class="admin-section" style="margin-top:20px;font-family:monospace;font-size:0.85rem;max-height:200px;overflow-y:auto;display:none;background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface);">
+      </div>
 
+    </div>
   </div>
 
   <script>
@@ -211,7 +230,7 @@
   function authenticate() {
     const t = document.getElementById('auth-token').value.trim();
     if (!t) {
-      mdui.snackbar({ message: 'Token 不能为空', placement: 'bottom' });
+      alert('Token 不能为空');
       return;
     }
     token = t;
@@ -298,8 +317,8 @@
     const postUrl  = document.getElementById('post-url').value.trim();
     const broadcast = document.getElementById('opt-broadcast').checked;
 
-    if (!title) { mdui.snackbar({ message: '请输入文章标题', placement: 'bottom' }); return; }
-    if (!content) { mdui.snackbar({ message: '内容不能为空', placement: 'bottom' }); return; }
+    if (!title) { alert('请输入文章标题'); return; }
+    if (!content) { alert('内容不能为空'); return; }
 
     const today = new Date().toISOString().slice(0, 10);
     const slug = filename || `${today}-${title.replace(/[^\w\u4e00-\u9fff]+/g, '-').toLowerCase()}`;
@@ -308,7 +327,6 @@
 
     const btn = document.getElementById('btn-publish');
     btn.disabled = true;
-    btn.loading = true;
     log(`📤 正在发布 ${path}${currentSHA ? ' (更新模式，携带SHA乐观锁)' : ' (新建模式)'}...`);
 
     try {
@@ -322,7 +340,6 @@
         message: `docs: ${currentSHA ? 'update' : 'publish'} ${slug}`
       };
 
-      // 修改文章防冲突 — 若有 SHA，必须附带（乐观锁）
       if (currentSHA) body.sha = currentSHA;
 
       const res = await fetch(`${WORKER}/admin/publish`, {
@@ -339,7 +356,7 @@
       if (res.status === 409) {
         log(`⚠️ 冲突检测: 文件已被并发修改！`);
         log(`💡 请点击"获取 SHA"刷新后重试`);
-        mdui.snackbar({ message: '⚠️ 冲突：文件已被修改，请重新获取SHA', placement: 'bottom', autoCloseDelay: 5000 });
+        alert('⚠️ 冲突：文件已被修改，请重新获取SHA');
         return;
       }
 
@@ -353,17 +370,16 @@
         if (data.tg_message_id) {
           log(`📣 已广播到 Telegram，消息 ID: ${data.tg_message_id}`);
         }
-        mdui.snackbar({ message: '🎉 文章发布成功！', placement: 'bottom' });
+        alert('🎉 文章发布成功！');
       } else {
         log(`❌ 发布失败: ${data.error}`);
-        mdui.snackbar({ message: `发布失败: ${data.error}`, placement: 'bottom' });
+        alert(`发布失败: ${data.error}`);
       }
     } catch (err) {
       log(`❌ 网络错误: ${err.message}`);
-      mdui.snackbar({ message: '网络错误', placement: 'bottom' });
+      alert('网络错误');
     } finally {
       btn.disabled = false;
-      btn.loading = false;
     }
   }
 
@@ -372,7 +388,7 @@
     const filename = document.getElementById('post-filename').value.trim();
     const title    = document.getElementById('post-title').value.trim();
     if (!filename && !title) {
-      mdui.snackbar({ message: '请先填写文件名或标题', placement: 'bottom' });
+      alert('请先填写文件名或标题');
       return null;
     }
     const today = new Date().toISOString().slice(0, 10);
@@ -416,10 +432,16 @@
   }
 
   function toggleTheme() {
-    const current = mdui.getTheme();
-    const next = current === 'dark' ? 'light' : 'dark';
-    mdui.setTheme(next);
-    document.getElementById('theme-toggle').icon = next === 'dark' ? 'light_mode--rounded' : 'dark_mode--rounded';
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    if (next === 'dark') {
+      html.setAttribute('data-theme', 'dark');
+    } else {
+      html.removeAttribute('data-theme');
+    }
+    localStorage.setItem('zgq-theme', next);
+    document.getElementById('theme-toggle').innerHTML = `<md-icon>${next === 'dark' ? 'light_mode' : 'dark_mode'}</md-icon>`;
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
@@ -432,7 +454,12 @@
     }
     // Apply saved theme
     const savedTheme = localStorage.getItem('zgq-theme') || 'dark';
-    mdui.setTheme(savedTheme);
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('theme-toggle').innerHTML = '<md-icon>light_mode</md-icon>';
+    } else {
+      document.getElementById('theme-toggle').innerHTML = '<md-icon>dark_mode</md-icon>';
+    }
   });
   </script>
 </body>
