@@ -1,0 +1,16 @@
+<div class="glass-panel main-feed">
+  <% page.posts.each(function(post) { %>
+    <mdui-card class="post-card glass-card" variant="elevated">
+      <div class="post-content">
+        <h2><a href="<%- url_for(post.path) %>"><%= post.title %></a></h2>
+        <div class="post-meta">
+          <mdui-chip><%- date(post.date, "YYYY-MM-DD") %></mdui-chip>
+        </div>
+        <p><%- post.excerpt || strip_html(post.content).substring(0, 150) %>...</p>
+      </div>
+      <div class="post-actions">
+        <mdui-button href="<%- url_for(post.path) %>" variant="text">阅读全文</mdui-button>
+      </div>
+    </mdui-card>
+  <% }) %>
+</div>

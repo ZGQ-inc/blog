@@ -1,0 +1,32 @@
+/* 
+  液态玻璃滤镜核心样式 
+  严格遵守 Phase 1 约束：杜绝 filter: blur() 与 backdrop-filter: blur()
+*/
+
+.liquid-glass-panel {
+  /* 挂载我们在 SVG 中定义的极其复杂的物理光学滤镜管线 */
+  backdrop-filter: url(#liquid-glass-filter);
+  -webkit-backdrop-filter: url(#liquid-glass-filter);
+
+  /* 设置极低的底色透明度，以便透出背后的重重光谱色散与高光折射 */
+  background: rgba(255, 255, 255, 0.05);
+
+  /* 
+    Phase 1 性能红线要求：必须使用 contain: strict 
+    隔离渲染与光栅化树，防止全屏滤镜重绘引发的性能灾难 
+    注: strict 等同于 size layout paint style，意味着元素必须声明明确的宽高或具有独立布局 
+  */
+  contain: strict;
+
+  /* 基础轮廓与高光辅助 */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+
+  /* 适配 contain: strict 所需的固定或响应式外形尺寸 (此处为演示用 navigation-bar 占位) */
+  width: 100%;
+  height: 80px; 
+  position: relative;
+  z-index: 10;
+}

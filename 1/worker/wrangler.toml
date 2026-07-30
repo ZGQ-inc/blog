@@ -1,0 +1,11 @@
+name = "serverless-blog-worker"
+main = "src/index.ts"
+compatibility_date = "2026-07-28"
+
+# 强制限制 Node.js 原生模块，确保 100% 运行在 V8 Isolate 中，追求极速冷启动
+node_compat = false 
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog_comments"
+database_id = "YOUR_D1_ID"

@@ -1,0 +1,14 @@
+<%
+/* page.ejs — Generic page (used for custom pages like /forum/) */
+%>
+
+<div class="fade-in-up">
+  <% if (page.title) { %>
+    <h1 style="font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;margin:0 0 32px;">
+      <%= page.title %>
+    </h1>
+  <% } %>
+  <div class="article-body">
+    <%- page.content %>
+  </div>
+</div>

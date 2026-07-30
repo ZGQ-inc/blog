@@ -1,0 +1,15 @@
+{
+  "name": "serverless-blog-worker",
+  "version": "1.0.0",
+  "description": "Serverless Blog Backend for Twikoo and Telegram Sync",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@telegraf/entity": "^0.2.0",
+    "xss": "^1.0.15"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0"
+  }
+}

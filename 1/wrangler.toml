@@ -1,0 +1,31 @@
+name = "serverless-blog-worker"
+main = "src/index.js"
+compatibility_date = "2024-03-20"
+compatibility_flags = ["nodejs_compat"]
+
+# [Phase 2] 废弃 SMTP，配置 RESTful Webhook 与核心基础变量
+[vars]
+WEBHOOK_URL = ""                     # 第三方邮件推送 Webhook URL
+AUTHOR_NAME = "ZGQ"                  # 核心开发者/博主标识
+GITHUB_REPO_OWNER = "ZGQ"            # GitOps: GitHub Owner
+GITHUB_REPO_NAME = "blog-repo"       # GitOps: 目标仓库
+GITHUB_POSTS_PATH = "source/_posts"  # GitOps: Hexo 存放 Markdown 的目录
+
+# [Phase 2] 绑定 D1 数据库 (SQLite)
+# 确保 API 响应控制在 0.5s 以内的 V8 Isolate 边缘存储
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"
+database_id = "00000000-0000-0000-0000-000000000000" # 待执行 wrangler d1 create 后替换
+migrations_dir = "./migrations"
+
+# 绑定 R2 存储桶 (图床与静态资源)
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "blog-media"
+preview_bucket_name = "blog-media-preview"
+
+# 环境配置隔离 - 生产环境
+[env.production]
+name = "serverless-blog-worker-prod"
+# production 的环境变量等配置可在此覆盖

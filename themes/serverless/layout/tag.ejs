@@ -1,0 +1,70 @@
+<%
+/* tag.ejs — Tag cloud page (or single tag listing) */
+const isSingleTag = !!page.tag;
+const allTags = site.tags.sort('name');
+%>
+
+<div class="fade-in-up">
+
+  <% if (isSingleTag) { %>
+    <!-- ── Single Tag View ──────────────────────────────────────────────────── -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px;flex-wrap:wrap;">
+      <mdui-button href="/tags/" variant="text" icon="arrow_back--rounded">所有标签</mdui-button>
+      <mdui-chip icon="label--outlined" style="font-size:1rem;height:auto;padding:8px 16px;">
+        <%= page.tag %>
+      </mdui-chip>
+      <span style="opacity:0.5;font-size:0.9rem;"><%= page.posts.length %> 篇文章</span>
+    </div>
+
+    <div class="posts-grid">
+      <% page.posts.sort('date', -1).each(function(post, i) { %>
+        <article class="liquid-glass-card fade-in-up" style="animation-delay:<%= i * 60 %>ms">
+          <div class="post-card-inner">
+            <a class="post-card-title" href="<%= url_for(post.path) %>"><%= post.title %></a>
+            <p class="post-card-excerpt">
+              <%= post.excerpt ? strip_html(post.excerpt) : (post.content ? strip_html(post.content).slice(0, 120) + '…' : '') %>
+            </p>
+            <div class="post-card-meta">
+              <mdui-icon name="calendar_today--outlined" style="font-size:14px;"></mdui-icon>
+              <time datetime="<%= date_xml(post.date) %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+
+  <% } else { %>
+    <!-- ── Tag Cloud View ───────────────────────────────────────────────────── -->
+    <div style="margin-bottom:40px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <mdui-icon name="label--rounded" style="font-size:2rem;color:var(--md-sys-color-primary);"></mdui-icon>
+        <h1 style="font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;margin:0;">标签云</h1>
+      </div>
+      <p style="opacity:0.6;margin:0;">共 <%= site.tags.length %> 个标签</p>
+    </div>
+
+    <!-- Tag chips — size proportional to post count -->
+    <div style="display:flex;flex-wrap:wrap;gap:12px;padding:24px;background:var(--glass-bg-light);border:1px solid var(--glass-border);border-radius:var(--radius-xl);">
+      <% allTags.each(function(tag) {
+           const count = tag.posts.length;
+           const maxCount = Math.max(...site.tags.map(t => t.posts.length));
+           const scale = 0.75 + (count / maxCount) * 0.8;
+           const opacity = 0.5 + (count / maxCount) * 0.5;
+      %>
+        <mdui-chip
+          href="<%= url_for(tag.path) %>"
+          icon="label--outlined"
+          style="font-size:<%= (0.75 + (count/maxCount)*0.45).toFixed(2) %>rem;opacity:<%= opacity.toFixed(2) %>;">
+          <%= tag.name %>
+          <span slot="end-icon" style="font-size:0.7em;opacity:0.7;margin-left:4px;">(<%= count %>)</span>
+        </mdui-chip>
+      <% }) %>
+    </div>
+
+    <% if (site.tags.length === 0) { %>
+      <div class="liquid-glass-card" style="padding:64px;text-align:center;opacity:0.6;">
+        <p>暂无标签</p>
+      </div>
+    <% } %>
+  <% } %>
+</div>

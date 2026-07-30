@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="mdui-theme-auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="renderer" content="webkit">
+
+  <!-- SEO Meta -->
+  <title><%= page.title ? page.title + ' | ' + config.title : config.title %></title>
+  <meta name="description" content="<%= page.description || config.description %>">
+  <meta name="keywords" content="<%= (page.tags ? page.tags.toArray().map(t=>t.name).join(',') : '') || config.keywords %>">
+  <meta name="author" content="<%= config.author %>">
+
+  <!-- Open Graph -->
+  <meta property="og:title"       content="<%= page.title || config.title %>">
+  <meta property="og:description" content="<%= page.description || config.description %>">
+  <meta property="og:type"        content="website">
+  <meta property="og:site_name"   content="<%= config.title %>">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="<%= config.url + url_for(page.path) %>">
+
+  <!-- MDUI 2 — Material Design Web Components (零框架依赖) -->
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
+  <script src="https://unpkg.com/mdui@2/mdui.global.js" defer></script>
+
+  <!-- 液态玻璃光学 CSS + M3 设计系统 -->
+  <link rel="stylesheet" href="/css/liquid-glass.css">
+</head>
+
+<body class="mdui-theme-auto">
+
+  <!-- Phase 1: 挂载 SVG 光学管线定义 (display:none 不占位) -->
+  <%- partial('partial/svg-filters') %>
+
+  <!-- ═══ MDUI Layout Shell ════════════════════════════════════════════════════ -->
+  <mdui-layout id="app-layout">
+
+    <!-- ── Top App Bar ───────────────────────────────────────────────────────── -->
+    <mdui-top-app-bar
+      id="top-app-bar"
+      class="liquid-glass-panel"
+      scroll-behavior="elevate"
+      scroll-target="window"
+      order="0">
+
+      <!-- Hamburger — opens navigation drawer -->
+      <mdui-button-icon
+        id="nav-drawer-toggle"
+        icon="menu--rounded"
+        aria-label="打开导航菜单"
+        slot=""
+        onclick="document.getElementById('nav-drawer').open = !document.getElementById('nav-drawer').open">
+      </mdui-button-icon>
+
+      <!-- Site title / Logo -->
+      <mdui-top-app-bar-title>
+        <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-0.01em;">
+          <span style="background:linear-gradient(135deg,hsl(250,80%,70%),hsl(175,70%,60%));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+            <%= config.title %>
+          </span>
+        </a>
+      </mdui-top-app-bar-title>
+
+      <!-- Spacer -->
+      <div style="flex:1;"></div>
+
+      <!-- Dark mode toggle -->
+      <mdui-tooltip content="切换主题" placement="bottom">
+        <mdui-button-icon
+          id="theme-toggle-btn"
+          icon="dark_mode--rounded"
+          aria-label="切换深色/浅色主题">
+        </mdui-button-icon>
+      </mdui-tooltip>
+
+      <!-- Search -->
+      <mdui-tooltip content="搜索" placement="bottom">
+        <mdui-button-icon icon="search--rounded" aria-label="搜索"></mdui-button-icon>
+      </mdui-tooltip>
+
+    </mdui-top-app-bar>
+
+    <!-- ── Navigation Drawer ─────────────────────────────────────────────────── -->
+    <mdui-navigation-drawer
+      id="nav-drawer"
+      close-on-overlay-click
+      close-on-esc
+      order="1"
+      style="--mdui-comp-navigation-drawer-container-color: transparent;">
+
+      <div style="padding:16px 8px 8px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:1.1rem;font-weight:700;padding-left:12px;opacity:0.9;">ZGQ Blog</span>
+        <mdui-button-icon
+          icon="close--rounded"
+          onclick="document.getElementById('nav-drawer').open = false">
+        </mdui-button-icon>
+      </div>
+
+      <mdui-divider></mdui-divider>
+
+      <mdui-list style="padding: 8px;">
+        <mdui-list-item
+          icon="home--rounded"
+          href="/"
+          rounded
+          <%- page.path === '' || page.path === 'index.html' ? 'active' : '' %>>
+          主页
+        </mdui-list-item>
+        <mdui-list-item
+          icon="library_books--rounded"
+          href="/archives/"
+          rounded
+          <%- page.layout === 'archive' ? 'active' : '' %>>
+          文章归档
+        </mdui-list-item>
+        <mdui-list-item
+          icon="label--rounded"
+          href="/tags/"
+          rounded
+          <%- page.layout === 'tag' ? 'active' : '' %>>
+          标签云
+        </mdui-list-item>
+        <mdui-list-item
+          icon="forum--rounded"
+          href="/forum/"
+          rounded
+          <%- page.path === 'forum/index.html' ? 'active' : '' %>>
+          <span>TG 讨论区</span>
+          <span class="live-dot" slot="end-icon" title="实时同步中"></span>
+        </mdui-list-item>
+        <mdui-list-item
+          icon="rss_feed--rounded"
+          href="/atom.xml"
+          rounded
+          target="_blank">
+          RSS 订阅
+        </mdui-list-item>
+      </mdui-list>
+
+      <mdui-divider></mdui-divider>
+
+      <!-- Telegram channel link -->
+      <mdui-list style="padding: 8px;">
+        <mdui-list-item
+          icon="telegram"
+          href="https://t.me/<%= config.telegram_channel || 'your_channel' %>"
+          rounded
+          target="_blank">
+          Telegram 频道
+        </mdui-list-item>
+        <mdui-list-item
+          icon="admin_panel_settings--rounded"
+          href="/admin/"
+          rounded>
+          管理后台
+        </mdui-list-item>
+      </mdui-list>
+    </mdui-navigation-drawer>
+
+    <!-- ── Main Content Area ─────────────────────────────────────────────────── -->
+    <mdui-layout-main>
+      <div class="site-main">
+        <div class="site-container">
+          <%- body %>
+        </div>
+      </div>
+
+      <!-- ── Site Footer ────────────────────────────────────────────────────── -->
+      <footer class="site-footer">
+        <p>
+          © <%= new Date().getFullYear() %>
+          <strong>ZGQ Inc.</strong> &nbsp;·&nbsp;
+          Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> &nbsp;·&nbsp;
+          Hosted on <a href="https://pages.cloudflare.com" target="_blank" rel="noopener">Cloudflare Pages</a>
+        </p>
+        <p style="opacity:0.6;font-size:0.8rem;margin-top:4px;">
+          Serverless · No VPS · Pure Edge Computing
+        </p>
+      </footer>
+    </mdui-layout-main>
+
+  </mdui-layout>
+
+  <!-- ── Floating Action Button: Scroll to Top ──────────────────────────────── -->
+  <mdui-fab
+    id="fab-scroll-top"
+    icon="keyboard_arrow_up--rounded"
+    aria-label="返回顶部"
+    onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  </mdui-fab>
+
+  <!-- ── Global Scripts ─────────────────────────────────────────────────────── -->
+  <script>
+    // ── Theme Toggle ────────────────────────────────────────────────────────
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    const html = document.documentElement;
+
+    function applyTheme(theme) {
+      mdui.setTheme(theme);
+      themeBtn.icon = theme === 'dark' ? 'light_mode--rounded' : 'dark_mode--rounded';
+      localStorage.setItem('zgq-theme', theme);
+    }
+
+    // Init from localStorage or system preference
+    const savedTheme = localStorage.getItem('zgq-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+    themeBtn.addEventListener('click', () => {
+      const current = mdui.getTheme();
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // ── FAB Scroll to Top ────────────────────────────────────────────────────
+    const fab = document.getElementById('fab-scroll-top');
+    window.addEventListener('scroll', () => {
+      fab.classList.toggle('visible', window.scrollY > 300);
+    }, { passive: true });
+  </script>
+
+</body>
+</html>

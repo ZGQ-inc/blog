@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="mdui-theme-auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title><%= config.title %></title>
+  
+  <!-- MDUI CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+  <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Liquid Glass SVG Filter Pipeline -->
+  <svg width="0" height="0" style="position: absolute; display: none;">
+    <filter id="liquid-glass" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <!-- 1. Displacement Map (Neutral gray center, smooth edge transition) -->
+      <feImage href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciPjxzdG9wIG9mZnNldD0iNzAlIiBzdG9wLWNvbG9yPSJyZ2IoMTI4LDEyOCwxMjgpIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSJyZ2IoMjAwLDIwMCwyMDApIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNnKSIvPjwvc3ZnPg==" result="displacementMap" />
+      
+      <!-- 2. Split RGB Channels -->
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="redChannel" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="greenChannel" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" in="SourceGraphic" result="blueChannel" />
+      
+      <!-- 3. Chromatic Aberration via Specific Displacements -->
+      <feDisplacementMap in="redChannel" in2="displacementMap" scale="-20" xChannelSelector="R" yChannelSelector="G" result="redDisplaced" />
+      <feDisplacementMap in="greenChannel" in2="displacementMap" scale="-24" xChannelSelector="R" yChannelSelector="G" result="greenDisplaced" />
+      <feDisplacementMap in="blueChannel" in2="displacementMap" scale="-28" xChannelSelector="R" yChannelSelector="G" result="blueDisplaced" />
+      
+      <!-- 4. Screen Blend Channels -->
+      <feBlend mode="screen" in="redDisplaced" in2="greenDisplaced" result="rgBlend" />
+      <feBlend mode="screen" in="rgBlend" in2="blueDisplaced" result="rgbBlend" />
+      
+      <!-- 5. Specular Highlight (Rim Lighting based on Alpha/Thickness) -->
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="alphaMap" />
+      <feGaussianBlur stdDeviation="3" in="alphaMap" result="blurredAlpha" />
+      <feSpecularLighting in="blurredAlpha" surfaceScale="4" specularConstant="1" specularExponent="30" lighting-color="#ffffff" result="specularLight">
+        <fePointLight x="250" y="-50" z="300" />
+      </feSpecularLighting>
+      
+      <!-- 6. Composite Light and Chromatic Render -->
+      <feComposite in="specularLight" in2="rgbBlend" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+    </filter>
+  </svg>
+
+  <mdui-layout>
+    <mdui-top-app-bar class="glass-container">
+      <mdui-top-app-bar-title><%= config.title %></mdui-top-app-bar-title>
+    </mdui-top-app-bar>
+
+    <mdui-layout-main class="main-content">
+      <div class="content-wrapper">
+        <%- body %>
+      </div>
+    </mdui-layout-main>
+  </mdui-layout>
+</body>
+</html>

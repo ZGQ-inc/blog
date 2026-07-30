@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;" aria-hidden="true">
+  <defs>
+    <!-- 
+      Phase 1: Liquid Glass UI SVG 光学管线 
+      严禁使用常规高斯模糊，必须表现物理厚度与折射
+    -->
+    <filter id="liquid-glass-filter" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      
+      <!-- 1. 引入充当“法线贴图”的位移图（中心区域必须为 rgb(128, 128, 128) 中性灰，四周过渡） -->
+      <!-- 生产环境中应替换为真实的正常位移贴图 Base64 或静态资源 URL -->
+      <feImage href="/images/glass-displacement-map.png" result="normalMap" />
+
+      <!-- 2. 物理色散 (Chromatic Aberration) - 分离原图 RGB 三个通道 -->
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+                     values="1 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 1 0" result="channelR" />
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+                     values="0 0 0 0 0  
+                             0 1 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 1 0" result="channelG" />
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+                     values="0 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 1 0 0  
+                             0 0 0 1 0" result="channelB" />
+
+      <!-- 3. 对三通道分别进行错位折射，产生光谱分离与边缘畸变 -->
+      <!-- 强制基准缩放因子：R: -20, G: -24, B: -28 -->
+      <feDisplacementMap in="channelR" in2="normalMap" xChannelSelector="R" yChannelSelector="G" scale="-20" result="refractedR" />
+      <feDisplacementMap in="channelG" in2="normalMap" xChannelSelector="R" yChannelSelector="G" scale="-24" result="refractedG" />
+      <feDisplacementMap in="channelB" in2="normalMap" xChannelSelector="R" yChannelSelector="G" scale="-28" result="refractedB" />
+
+      <!-- 4. 将产生色散的 RGB 通道重新合并 (采用 screen 滤色模式保留高光光晕) -->
+      <feBlend mode="screen" in="refractedR" in2="refractedG" result="blendRG" />
+      <feBlend mode="screen" in="blendRG" in2="refractedB" result="refractionBase" />
+
+      <!-- 5. 高光反射 (Specular Rim) 计算，利用原图的 Alpha 厚度 -->
+      <feSpecularLighting in="SourceAlpha" surfaceScale="3" specularConstant="1.2" specularExponent="20" lighting-color="#ffffff" result="specularLight">
+        <!-- 模拟环境点光源 -->
+        <fePointLight x="100" y="-50" z="200" />
+      </feSpecularLighting>
+
+      <!-- 6. 最终合并：将高光层覆盖于折射基础层之上 -->
+      <feComposite in="specularLight" in2="refractionBase" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+    </filter>
+  </defs>
+</svg>

@@ -1,0 +1,35 @@
+name = "serverless-blog-worker"
+main = "src/index.ts"
+compatibility_date = "2026-07-14"
+
+# 强制 V8 Isolate 模式 — 禁止 Node.js 原生模块，确保极速冷启动 (< 1 MiB)
+node_compat = false
+
+# ─── D1 数据库绑定 ─────────────────────────────────────────────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "blog_comments"
+database_id = "a1b4fbba-ff8e-44a3-82d3-d8bee6be6e13"
+
+# ─── R2 存储 (可选, 媒体上传) ───────────────────────────────────────────────────
+# [[r2_buckets]]
+# binding = "MEDIA_BUCKET"
+# bucket_name = "blog-media"
+
+# ─── 非机密变量 (Non-secret vars) ─────────────────────────────────────────────
+[vars]
+GITHUB_OWNER = "YOUR_GITHUB_USERNAME"   # 替换为你的 GitHub 用户名
+GITHUB_REPO  = "YOUR_GITHUB_REPO"       # 替换为你的仓库名
+
+# ─── 机密变量 — 生产环境请使用 wrangler secret put <NAME> ────────────────────
+# wrangler secret put TELEGRAM_BOT_TOKEN
+# wrangler secret put TELEGRAM_CHAT_ID
+# wrangler secret put TELEGRAM_SECRET_TOKEN
+# wrangler secret put GITHUB_PAT
+# wrangler secret put MAIL_WEBHOOK_URL
+# wrangler secret put ADMIN_EMAIL
+
+# ─── 开发环境本地模拟 ────────────────────────────────────────────────────────
+[dev]
+port = 8787
+local_protocol = "http"

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="mdui-theme-auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 — ZGQ Blog</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
+  <script src="https://unpkg.com/mdui@2/mdui.global.js" defer></script>
+  <link rel="stylesheet" href="/css/liquid-glass.css">
+  <style>
+    body { background: var(--md-sys-color-background, #0f0f1a); min-height: 100vh; }
+
+    /* Code-mirror-like editor area */
+    #md-editor {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+    }
+
+    /* Split editor/preview */
+    .editor-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    #md-preview {
+      font-family: var(--font-sans, 'Inter', sans-serif);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      padding: 20px;
+      min-height: 420px;
+      background: var(--md-sys-color-surface, #111);
+      border: 1px solid var(--md-sys-color-outline-variant, #333);
+      border-radius: 12px;
+      overflow-y: auto;
+    }
+
+    @media (max-width: 768px) {
+      .editor-split { grid-template-columns: 1fr; }
+      #md-preview { display: none; }
+    }
+
+    .admin-section {
+      background: var(--glass-bg-light, rgba(255,255,255,0.05));
+      border: 1px solid var(--glass-border, rgba(255,255,255,0.1));
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.85;
+    }
+
+    #sha-badge {
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: var(--md-sys-color-surface-variant, #222);
+      border-radius: 6px;
+      padding: 3px 8px;
+      opacity: 0.7;
+      display: none;
+    }
+  </style>
+</head>
+<body class="mdui-theme-auto">
+
+  <!-- Auth wall -->
+  <div id="auth-wall" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;">
+    <div class="liquid-glass-card" style="max-width:380px;width:100%;padding:40px;text-align:center;">
+      <mdui-icon name="admin_panel_settings--rounded" style="font-size:3rem;color:var(--md-sys-color-primary);"></mdui-icon>
+      <h1 style="font-size:1.4rem;font-weight:700;margin:16px 0 8px;">管理后台</h1>
+      <p style="opacity:0.6;font-size:0.9rem;margin-bottom:24px;">ZGQ Inc. — Serverless Blog Admin</p>
+      <mdui-text-field id="auth-token" label="GitHub PAT Token" type="password" clearable style="width:100%;margin-bottom:16px;"></mdui-text-field>
+      <mdui-button id="auth-btn" variant="filled" style="width:100%;" onclick="authenticate()" icon="login--rounded">
+        登录
+      </mdui-button>
+    </div>
+  </div>
+
+  <!-- Main admin panel (hidden until auth) -->
+  <div id="admin-panel" style="display:none;max-width:1100px;margin:0 auto;padding:80px 16px 48px;">
+
+    <!-- Top App Bar -->
+    <mdui-top-app-bar class="liquid-glass-panel" style="position:fixed;top:0;left:0;right:0;">
+      <mdui-top-app-bar-title>
+        <span style="font-weight:700;">ZGQ Admin</span>
+        <span style="font-size:0.75rem;opacity:0.5;margin-left:8px;">Serverless GitOps</span>
+      </mdui-top-app-bar-title>
+      <div style="flex:1;"></div>
+      <mdui-button-icon icon="home--rounded" href="/" aria-label="返回主页"></mdui-button-icon>
+      <mdui-button-icon id="theme-toggle" icon="dark_mode--rounded" onclick="toggleTheme()"></mdui-button-icon>
+      <mdui-button-icon icon="logout--rounded" onclick="logout()" aria-label="退出登录"></mdui-button-icon>
+    </mdui-top-app-bar>
+
+    <!-- ── File Settings ─────────────────────────────────────────────────────── -->
+    <div class="admin-section">
+      <h2 class="section-title">
+        <mdui-icon name="settings--outlined" style="font-size:18px;"></mdui-icon>
+        发布设置
+      </h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <mdui-text-field id="post-title" label="文章标题 *" clearable required></mdui-text-field>
+        <mdui-text-field id="post-filename" label="文件名 (不含.md)" placeholder="2024-01-my-post" clearable></mdui-text-field>
+        <mdui-text-field id="post-tags" label="标签 (逗号分隔)" placeholder="技术, Cloudflare, Worker" clearable></mdui-text-field>
+        <mdui-text-field id="post-category" label="分类" clearable></mdui-text-field>
+        <mdui-text-field id="post-url" label="文章 URL (用于 TG 广播)" placeholder="https://zgq.blog/2024/..." clearable></mdui-text-field>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <mdui-checkbox id="opt-broadcast" checked>广播到 Telegram</mdui-checkbox>
+          <mdui-checkbox id="opt-draft">草稿模式</mdui-checkbox>
+        </div>
+      </div>
+
+      <!-- SHA display (shown in edit mode) -->
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="sha-badge">SHA: —</span>
+        <mdui-button id="fetch-sha-btn" variant="text" icon="sync--rounded" style="display:none;" onclick="fetchSHA()">
+          获取最新 SHA
+        </mdui-button>
+      </div>
+    </div>
+
+    <!-- ── Markdown Editor ─────────────────────────────────────────────────── -->
+    <div class="admin-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <h2 class="section-title" style="margin:0;">
+          <mdui-icon name="edit--outlined" style="font-size:18px;"></mdui-icon>
+          Markdown 编辑器
+        </h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <mdui-button variant="text" size="small" onclick="insertFrontmatter()" icon="article--outlined">
+            插入 Front-matter
+          </mdui-button>
+          <mdui-tooltip content="切换预览" placement="bottom">
+            <mdui-button-icon icon="preview--rounded" onclick="togglePreview()"></mdui-button-icon>
+          </mdui-tooltip>
+        </div>
+      </div>
+
+      <div class="editor-split" id="editor-container">
+        <mdui-text-field
+          id="md-editor"
+          label="Markdown 内容 *"
+          rows="20"
+          max-rows="50"
+          required
+          oninput="updatePreview()"
+          style="width:100%;"
+          helper="支持标准 Markdown + Front-matter">
+        </mdui-text-field>
+        <div id="md-preview">
+          <p style="opacity:0.4;text-align:center;">开始输入 Markdown...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;">
+      <mdui-button
+        id="btn-new-post"
+        variant="outlined"
+        icon="add--rounded"
+        onclick="newPost()">
+        新建文章
+      </mdui-button>
+      <mdui-button
+        id="btn-fetch-sha"
+        variant="outlined"
+        icon="sync--rounded"
+        onclick="fetchSHA()">
+        获取 SHA (编辑模式)
+      </mdui-button>
+      <mdui-button
+        id="btn-publish"
+        variant="filled"
+        icon="publish--rounded"
+        onclick="publishPost()">
+        发布文章
+      </mdui-button>
+    </div>
+
+    <!-- ── Status Log ─────────────────────────────────────────────────────── -->
+    <div id="status-log" class="admin-section" style="margin-top:20px;font-family:monospace;font-size:0.85rem;max-height:200px;overflow-y:auto;display:none;">
+    </div>
+
+  </div>
+
+  <script>
+  // ══════════════════════════════════════════════════════════════════════════
+  // Admin Panel — ZGQ Inc.
+  // Phase 4: GitHub REST API GitOps with Optimistic Locking
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const WORKER = '/api';
+  let token = '';
+  let currentSHA = null;
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  function authenticate() {
+    const t = document.getElementById('auth-token').value.trim();
+    if (!t) {
+      mdui.snackbar({ message: 'Token 不能为空', placement: 'bottom' });
+      return;
+    }
+    token = t;
+    localStorage.setItem('zgq-admin-token', t);
+    showPanel();
+  }
+
+  function logout() {
+    localStorage.removeItem('zgq-admin-token');
+    token = '';
+    document.getElementById('auth-wall').style.display = 'flex';
+    document.getElementById('admin-panel').style.display = 'none';
+  }
+
+  function showPanel() {
+    document.getElementById('auth-wall').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    log('✅ 认证成功，欢迎 ZGQ');
+  }
+
+  // ── New Post ─────────────────────────────────────────────────────────────────
+  function newPost() {
+    currentSHA = null;
+    document.getElementById('sha-badge').style.display = 'none';
+    document.getElementById('fetch-sha-btn').style.display = 'none';
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('md-editor').value =
+      `---\ntitle: 新文章\ndate: ${today}\ntags: []\ncategories: []\n---\n\n正文内容...`;
+    updatePreview();
+    log('📝 已创建新文章模板');
+  }
+
+  function insertFrontmatter() {
+    const title = document.getElementById('post-title').value || '新文章';
+    const tags  = document.getElementById('post-tags').value;
+    const cat   = document.getElementById('post-category').value;
+    const today = new Date().toISOString().slice(0, 10);
+    const tagArr = tags ? tags.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const fm = `---\ntitle: ${title}\ndate: ${today}\ntags: [${tagArr.map(t=>`${t}`).join(', ')}]\ncategories: [${cat || ''}]\nauthor: ZGQ\n---\n\n`;
+
+    const editor = document.getElementById('md-editor');
+    const existing = editor.value || '';
+    // Replace existing frontmatter or prepend
+    editor.value = existing.startsWith('---')
+      ? fm + existing.replace(/^---[\s\S]*?---\n\n?/, '')
+      : fm + existing;
+    updatePreview();
+  }
+
+  // ── Fetch SHA (乐观锁前置步骤) ────────────────────────────────────────────────
+  async function fetchSHA() {
+    const path = getFilePath();
+    if (!path) return;
+
+    log(`🔍 正在获取 ${path} 的最新 SHA...`);
+    try {
+      const res = await fetch(`${WORKER}/admin/sha?path=${encodeURIComponent(path)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      if (data.exists && data.sha) {
+        currentSHA = data.sha;
+        const badge = document.getElementById('sha-badge');
+        badge.textContent = `SHA: ${data.sha.slice(0, 8)}…`;
+        badge.style.display = 'inline-block';
+        document.getElementById('fetch-sha-btn').style.display = 'inline-flex';
+        log(`✅ SHA 获取成功: ${data.sha.slice(0, 16)}… (文件已存在，将执行更新)`);
+      } else {
+        currentSHA = null;
+        log(`ℹ️ 文件不存在，将执行创建`);
+      }
+    } catch (err) {
+      log(`❌ SHA 获取失败: ${err.message}`);
+    }
+  }
+
+  // ── Publish / Update ─────────────────────────────────────────────────────────
+  async function publishPost() {
+    const title    = document.getElementById('post-title').value.trim();
+    const content  = document.getElementById('md-editor').value.trim();
+    const filename = document.getElementById('post-filename').value.trim();
+    const tagsRaw  = document.getElementById('post-tags').value.trim();
+    const postUrl  = document.getElementById('post-url').value.trim();
+    const broadcast = document.getElementById('opt-broadcast').checked;
+
+    if (!title) { mdui.snackbar({ message: '请输入文章标题', placement: 'bottom' }); return; }
+    if (!content) { mdui.snackbar({ message: '内容不能为空', placement: 'bottom' }); return; }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const slug = filename || `${today}-${title.replace(/[^\w\u4e00-\u9fff]+/g, '-').toLowerCase()}`;
+    const path = `_posts/${slug}.md`;
+    const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    const btn = document.getElementById('btn-publish');
+    btn.disabled = true;
+    btn.loading = true;
+    log(`📤 正在发布 ${path}${currentSHA ? ' (更新模式，携带SHA乐观锁)' : ' (新建模式)'}...`);
+
+    try {
+      const body = {
+        path,
+        content,
+        title,
+        tags,
+        postUrl: postUrl || `https://zgq.blog/${today.replace(/-/g,'/')}/${slug}/`,
+        broadcast,
+        message: `docs: ${currentSHA ? 'update' : 'publish'} ${slug}`
+      };
+
+      // 修改文章防冲突 — 若有 SHA，必须附带（乐观锁）
+      if (currentSHA) body.sha = currentSHA;
+
+      const res = await fetch(`${WORKER}/admin/publish`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (res.status === 409) {
+        log(`⚠️ 冲突检测: 文件已被并发修改！`);
+        log(`💡 请点击"获取 SHA"刷新后重试`);
+        mdui.snackbar({ message: '⚠️ 冲突：文件已被修改，请重新获取SHA', placement: 'bottom', autoCloseDelay: 5000 });
+        return;
+      }
+
+      if (data.success) {
+        currentSHA = data.sha;
+        const badge = document.getElementById('sha-badge');
+        badge.textContent = `SHA: ${data.sha.slice(0,8)}…`;
+        badge.style.display = 'inline-block';
+
+        log(`✅ 发布成功！新 SHA: ${data.sha.slice(0, 16)}…`);
+        if (data.tg_message_id) {
+          log(`📣 已广播到 Telegram，消息 ID: ${data.tg_message_id}`);
+        }
+        mdui.snackbar({ message: '🎉 文章发布成功！', placement: 'bottom' });
+      } else {
+        log(`❌ 发布失败: ${data.error}`);
+        mdui.snackbar({ message: `发布失败: ${data.error}`, placement: 'bottom' });
+      }
+    } catch (err) {
+      log(`❌ 网络错误: ${err.message}`);
+      mdui.snackbar({ message: '网络错误', placement: 'bottom' });
+    } finally {
+      btn.disabled = false;
+      btn.loading = false;
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function getFilePath() {
+    const filename = document.getElementById('post-filename').value.trim();
+    const title    = document.getElementById('post-title').value.trim();
+    if (!filename && !title) {
+      mdui.snackbar({ message: '请先填写文件名或标题', placement: 'bottom' });
+      return null;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const slug = filename || `${today}-${title.replace(/[^\w\u4e00-\u9fff]+/g, '-').toLowerCase()}`;
+    return `_posts/${slug}.md`;
+  }
+
+  function log(msg) {
+    const logEl = document.getElementById('status-log');
+    logEl.style.display = 'block';
+    const time = new Date().toLocaleTimeString('zh-CN');
+    logEl.innerHTML += `<div style="opacity:0.7;margin-bottom:2px;">[${time}] ${msg}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // ── Markdown Preview (basic — no library needed) ──────────────────────────
+  function updatePreview() {
+    const raw = document.getElementById('md-editor').value || '';
+    // Strip frontmatter for preview
+    const body = raw.replace(/^---[\s\S]*?---\n/, '');
+    // Minimal Markdown → HTML (heading, bold, italic, code, links)
+    let html = body
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/^(?!<[hblcp])/gm, '');
+
+    document.getElementById('md-preview').innerHTML = `<p>${html}</p>`;
+  }
+
+  function togglePreview() {
+    const preview = document.getElementById('md-preview');
+    preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function toggleTheme() {
+    const current = mdui.getTheme();
+    const next = current === 'dark' ? 'light' : 'dark';
+    mdui.setTheme(next);
+    document.getElementById('theme-toggle').icon = next === 'dark' ? 'light_mode--rounded' : 'dark_mode--rounded';
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    const saved = localStorage.getItem('zgq-admin-token');
+    if (saved) {
+      document.getElementById('auth-token').value = saved;
+      token = saved;
+      showPanel();
+    }
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('zgq-theme') || 'dark';
+    mdui.setTheme(savedTheme);
+  });
+  </script>
+</body>
+</html>

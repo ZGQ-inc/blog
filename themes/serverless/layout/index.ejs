@@ -1,0 +1,113 @@
+<%
+/* index.ejs — Homepage: Post listing with Liquid Glass cards */
+const allPosts = site.posts.sort('date', -1);
+const featuredPosts = allPosts.limit(6);
+%>
+
+<!-- ── Hero Section ─────────────────────────────────────────────────────── -->
+<section class="hero-section fade-in-up">
+  <div class="liquid-glass-card" style="display:inline-block;padding:8px 20px;margin-bottom:24px;border-radius:999px;font-size:0.85rem;">
+    <span class="live-dot" style="margin-right:8px;"></span>
+    Telegram 实时同步 · Cloudflare Edge 加速
+  </div>
+  <h1 class="hero-title"><%= config.title %></h1>
+  <p class="hero-subtitle"><%= config.description %></p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <mdui-button href="/archives/" variant="filled" icon="library_books--rounded">浏览全部文章</mdui-button>
+    <mdui-button href="/forum/"    variant="outlined" icon="forum--rounded">进入讨论区</mdui-button>
+  </div>
+</section>
+
+<!-- ── Posts Grid ────────────────────────────────────────────────────────── -->
+<section>
+  <h2 style="font-size:1.1rem;font-weight:600;opacity:0.7;margin:0 0 24px;letter-spacing:0.05em;text-transform:uppercase;">
+    最新文章
+  </h2>
+
+  <% if (allPosts.length === 0) { %>
+    <div class="liquid-glass-card" style="padding:48px;text-align:center;opacity:0.6;">
+      <mdui-icon name="article--outlined" style="font-size:3rem;"></mdui-icon>
+      <p>暂无文章，快去写第一篇吧！</p>
+    </div>
+  <% } else { %>
+    <div class="posts-grid">
+      <% featuredPosts.each(function(post, i) { %>
+        <article class="liquid-glass-card fade-in-up" style="animation-delay:<%= i * 60 %>ms">
+          <div class="post-card-inner">
+            <!-- Category chip -->
+            <% if (post.categories && post.categories.length > 0) { %>
+              <div>
+                <% post.categories.each(function(cat) { %>
+                  <mdui-chip
+                    href="<%= url_for(cat.path) %>"
+                    style="font-size:0.75rem;">
+                    <%= cat.name %>
+                  </mdui-chip>
+                <% }) %>
+              </div>
+            <% } %>
+
+            <!-- Title -->
+            <a class="post-card-title" href="<%= url_for(post.path) %>">
+              <%= post.title %>
+            </a>
+
+            <!-- Excerpt -->
+            <p class="post-card-excerpt">
+              <%= post.excerpt ? strip_html(post.excerpt) : (post.content ? strip_html(post.content).slice(0, 120) + '…' : '点击阅读全文') %>
+            </p>
+
+            <!-- Meta -->
+            <div class="post-card-meta">
+              <mdui-icon name="calendar_today--outlined" style="font-size:14px;"></mdui-icon>
+              <time datetime="<%= date_xml(post.date) %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+              <span style="opacity:0.4;">·</span>
+              <mdui-icon name="person--outlined" style="font-size:14px;"></mdui-icon>
+              <span><%= post.author || config.author %></span>
+            </div>
+
+            <!-- Tags -->
+            <% if (post.tags && post.tags.length > 0) { %>
+              <div class="post-card-tags">
+                <% post.tags.each(function(tag) { %>
+                  <mdui-chip
+                    href="<%= url_for(tag.path) %>"
+                    icon="label--outlined"
+                    style="font-size:0.72rem;height:24px;">
+                    <%= tag.name %>
+                  </mdui-chip>
+                <% }) %>
+              </div>
+            <% } %>
+
+            <!-- Read more link -->
+            <div style="margin-top:auto;padding-top:12px;">
+              <mdui-button
+                href="<%= url_for(post.path) %>"
+                variant="text"
+                trailing-icon="arrow_forward--rounded"
+                style="padding-left:0;">
+                阅读全文
+              </mdui-button>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+
+    <!-- Pagination -->
+    <% if (page.total > 1) { %>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:48px;">
+        <% if (page.prev) { %>
+          <mdui-button href="<%= url_for(page.prev_link) %>" variant="outlined" icon="chevron_left--rounded">较新</mdui-button>
+        <% } %>
+        <span style="display:flex;align-items:center;padding:0 16px;opacity:0.6;font-size:0.9rem;">
+          第 <%= page.current %> / <%= page.total %> 页
+        </span>
+        <% if (page.next) { %>
+          <mdui-button href="<%= url_for(page.next_link) %>" variant="outlined" trailing-icon="chevron_right--rounded">较旧</mdui-button>
+        <% } %>
+      </div>
+    <% } %>
+  <% } %>
+</section>

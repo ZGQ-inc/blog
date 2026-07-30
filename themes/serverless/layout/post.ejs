@@ -1,0 +1,290 @@
+<%
+/* post.ejs — Article page with Liquid Glass card + Twikoo D1 comments */
+%>
+
+<div class="article-wrapper fade-in-up">
+
+  <!-- ── Breadcrumb ──────────────────────────────────────────────────────────── -->
+  <nav style="display:flex;align-items:center;gap:8px;font-size:0.85rem;opacity:0.65;margin-bottom:32px;">
+    <a href="/" style="color:inherit;text-decoration:none;">主页</a>
+    <mdui-icon name="chevron_right--rounded" style="font-size:16px;"></mdui-icon>
+    <% if (page.categories && page.categories.length > 0) { %>
+      <% page.categories.each(function(cat) { %>
+        <a href="<%= url_for(cat.path) %>" style="color:inherit;text-decoration:none;"><%= cat.name %></a>
+        <mdui-icon name="chevron_right--rounded" style="font-size:16px;"></mdui-icon>
+      <% }) %>
+    <% } %>
+    <span style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      <%= page.title %>
+    </span>
+  </nav>
+
+  <!-- ── Article Header ─────────────────────────────────────────────────────── -->
+  <header class="article-header liquid-glass-card" style="padding:32px 36px;">
+    <!-- Category + Tags chips -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+      <% if (page.categories && page.categories.length > 0) { %>
+        <% page.categories.each(function(cat) { %>
+          <mdui-chip href="<%= url_for(cat.path) %>" icon="folder--outlined">
+            <%= cat.name %>
+          </mdui-chip>
+        <% }) %>
+      <% } %>
+      <% if (page.tags && page.tags.length > 0) { %>
+        <% page.tags.each(function(tag) { %>
+          <mdui-chip href="<%= url_for(tag.path) %>" icon="label--outlined" style="--mdui-comp-chip-container-color:var(--md-sys-color-primary-container);">
+            <%= tag.name %>
+          </mdui-chip>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <!-- Title -->
+    <h1 class="article-title"><%= page.title %></h1>
+
+    <!-- Meta bar -->
+    <div class="article-meta">
+      <!-- Author avatar -->
+      <div class="comment-avatar" style="width:32px;height:32px;font-size:0.8rem;flex-shrink:0;">
+        <%= (page.author || config.author || 'Z').charAt(0).toUpperCase() %>
+      </div>
+      <span style="font-weight:500;"><%= page.author || config.author %></span>
+      <span style="opacity:0.4;">·</span>
+      <mdui-icon name="calendar_today--outlined" style="font-size:14px;"></mdui-icon>
+      <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, 'YYYY-MM-DD') %></time>
+      <% if (page.updated && page.updated.valueOf() !== page.date.valueOf()) { %>
+        <span style="opacity:0.4;">·</span>
+        <mdui-icon name="update--outlined" style="font-size:14px;"></mdui-icon>
+        <time datetime="<%= date_xml(page.updated) %>">更新 <%= date(page.updated, 'MM-DD') %></time>
+      <% } %>
+    </div>
+  </header>
+
+  <!-- ── Article Body ────────────────────────────────────────────────────────── -->
+  <main class="liquid-glass-card article-body" style="margin-top:20px;padding:36px;">
+    <%- page.content %>
+  </main>
+
+  <!-- ── Share & Navigation ─────────────────────────────────────────────────── -->
+  <div style="display:flex;justify-content:space-between;margin-top:24px;gap:12px;flex-wrap:wrap;">
+    <% if (page.prev) { %>
+      <mdui-button href="<%= url_for(page.prev.path) %>" variant="outlined" icon="arrow_back--rounded" style="flex:1;min-width:0;">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">
+          <%= page.prev.title %>
+        </span>
+      </mdui-button>
+    <% } else { %><div style="flex:1;"></div><% } %>
+    <% if (page.next) { %>
+      <mdui-button href="<%= url_for(page.next.path) %>" variant="outlined" trailing-icon="arrow_forward--rounded" style="flex:1;min-width:0;">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">
+          <%= page.next.title %>
+        </span>
+      </mdui-button>
+    <% } else { %><div style="flex:1;"></div><% } %>
+  </div>
+
+  <!-- ═══ Comments Section ════════════════════════════════════════════════════ -->
+  <section class="comments-section liquid-glass-card" style="margin-top:24px;padding:32px 36px;" id="comments">
+
+    <h2 class="comments-title">
+      <mdui-icon name="comment--outlined" style="font-size:22px;"></mdui-icon>
+      <span id="comment-count">评论</span>
+      <!-- Telegram sync indicator -->
+      <span class="live-dot" title="与 Telegram 群组实时同步" style="margin-left:8px;"></span>
+      <span style="font-size:0.8rem;font-weight:400;opacity:0.6;margin-left:4px;">Telegram 同步</span>
+    </h2>
+
+    <!-- Comment list -->
+    <div id="comment-list"></div>
+
+    <!-- Telegram discussion link -->
+    <div style="margin:16px 0;" id="tg-discuss-link"></div>
+
+    <!-- Comment form -->
+    <div class="comment-form" id="comment-form-wrapper">
+      <h3 style="grid-column:1/-1;font-size:1rem;font-weight:600;margin:24px 0 8px;">发表评论</h3>
+
+      <mdui-text-field id="comment-name"   label="昵称 *" required clearable></mdui-text-field>
+      <mdui-text-field id="comment-email"  label="邮箱 (可选)" type="email" clearable></mdui-text-field>
+      <mdui-text-field id="comment-site"   label="网站 (可选)" type="url" clearable></mdui-text-field>
+      <div style="grid-column:1/-1;width:100%;"></div>
+      <mdui-text-field
+        id="comment-content"
+        label="评论内容 *"
+        required
+        rows="5"
+        max-rows="10"
+        class="comment-textarea"
+        style="grid-column:1/-1;"
+        helper="支持部分 HTML 标签：&lt;a&gt; &lt;strong&gt; &lt;em&gt; &lt;code&gt;"
+      ></mdui-text-field>
+
+      <div class="comment-submit">
+        <mdui-button
+          id="comment-submit-btn"
+          variant="filled"
+          icon="send--rounded"
+          onclick="submitComment()">
+          提交评论
+        </mdui-button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ═══ Twikoo D1 Comment System ═══════════════════════════════════════════════
+const POST_SLUG = '<%= page.path %>';
+const WORKER_BASE = '/api'; // Cloudflare Worker endpoint (same-origin via Pages)
+
+// ── Load Comments ────────────────────────────────────────────────────────────
+async function loadComments() {
+  try {
+    const res = await fetch(WORKER_BASE + '/twikoo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'GET_COMMENTS', post_slug: POST_SLUG })
+    });
+    const { data } = await res.json();
+    renderComments(data || []);
+  } catch (err) {
+    document.getElementById('comment-list').innerHTML =
+      '<p style="opacity:0.5;text-align:center;">评论加载失败，请稍后再试。</p>';
+  }
+}
+
+// ── Render Comments (Threaded) ───────────────────────────────────────────────
+function renderComments(comments) {
+  const countEl = document.getElementById('comment-count');
+  countEl.textContent = `评论 (${comments.length})`;
+
+  const list = document.getElementById('comment-list');
+  if (!comments.length) {
+    list.innerHTML = '<p style="opacity:0.5;text-align:center;padding:24px 0;">暂无评论，来抢沙发吧！</p>';
+    return;
+  }
+
+  // Build parent → children map
+  const rootComments = comments.filter(c => !c.parent_id);
+  const childrenMap = {};
+  comments.filter(c => c.parent_id).forEach(c => {
+    (childrenMap[c.parent_id] = childrenMap[c.parent_id] || []).push(c);
+  });
+
+  function renderItem(comment, depth = 0) {
+    const initials = (comment.author_name || '?').charAt(0).toUpperCase();
+    const dateStr = new Date(comment.created_at * 1000).toLocaleDateString('zh-CN',
+      { year:'numeric', month:'2-digit', day:'2-digit' });
+    const isAdmin = comment.is_admin === 1;
+    const children = childrenMap[comment.id] || [];
+
+    return `
+      <div class="comment-item ${isAdmin ? 'is-admin' : ''}" id="comment-${comment.id}"
+           style="margin-left:${depth * 24}px;">
+        <div class="comment-avatar">${initials}</div>
+        <div class="comment-body">
+          <div class="comment-author">
+            ${comment.author_website
+              ? `<a href="${comment.author_website}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escHtml(comment.author_name)}</a>`
+              : escHtml(comment.author_name)}
+            ${isAdmin ? '<mdui-chip style="height:20px;font-size:0.7rem;margin-left:4px;">博主</mdui-chip>' : ''}
+            <span class="comment-time">${dateStr}</span>
+          </div>
+          <div class="comment-content">${comment.content}</div>
+          <div style="margin-top:8px;">
+            <mdui-button variant="text" style="font-size:0.8rem;padding-left:0;opacity:0.7;"
+              onclick="replyTo('${comment.id}', '${escHtml(comment.author_name)}')">
+              <mdui-icon name="reply--outlined" slot="icon" style="font-size:15px;"></mdui-icon>
+              回复
+            </mdui-button>
+          </div>
+        </div>
+      </div>
+      ${children.map(child => renderItem(child, depth + 1)).join('')}
+    `;
+  }
+
+  list.innerHTML = rootComments.map(c => renderItem(c)).join('');
+}
+
+// ── Reply To ─────────────────────────────────────────────────────────────────
+let replyingToId = null;
+function replyTo(parentId, authorName) {
+  replyingToId = parentId;
+  const contentField = document.getElementById('comment-content');
+  contentField.label = `回复 @${authorName}`;
+  contentField.focus();
+  document.getElementById('comment-form-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Submit Comment ────────────────────────────────────────────────────────────
+async function submitComment() {
+  const btn = document.getElementById('comment-submit-btn');
+  const name    = document.getElementById('comment-name').value.trim();
+  const email   = document.getElementById('comment-email').value.trim();
+  const site    = document.getElementById('comment-site').value.trim();
+  const content = document.getElementById('comment-content').value.trim();
+
+  if (!name || !content) {
+    mdui.snackbar({ message: '请填写昵称和评论内容', placement: 'bottom' });
+    return;
+  }
+
+  btn.disabled = true;
+  btn.loading = true;
+
+  try {
+    const res = await fetch(WORKER_BASE + '/twikoo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'COMMENT',
+        post_slug: POST_SLUG,
+        author_name: name,
+        author_email: email || undefined,
+        author_website: site || undefined,
+        content,
+        parent_id: replyingToId || undefined
+      })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      mdui.snackbar({ message: '评论提交成功！', placement: 'bottom' });
+      document.getElementById('comment-name').value = '';
+      document.getElementById('comment-email').value = '';
+      document.getElementById('comment-site').value = '';
+      document.getElementById('comment-content').value = '';
+      document.getElementById('comment-content').label = '评论内容 *';
+      replyingToId = null;
+      await loadComments();
+    } else {
+      mdui.snackbar({ message: result.error || '提交失败，请重试', placement: 'bottom' });
+    }
+  } catch (err) {
+    mdui.snackbar({ message: '网络错误，请稍后重试', placement: 'bottom' });
+  } finally {
+    btn.disabled = false;
+    btn.loading = false;
+  }
+}
+
+// ── Escape HTML ──────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Telegram Discuss Link ─────────────────────────────────────────────────────
+const tgLinkEl = document.getElementById('tg-discuss-link');
+if (tgLinkEl && '<%= config.telegram_channel || "" %>') {
+  tgLinkEl.innerHTML = `
+    <mdui-button variant="outlined" href="https://t.me/<%= config.telegram_channel || '' %>"
+      target="_blank" icon="telegram">
+      在 Telegram 中讨论
+    </mdui-button>
+  `;
+}
+
+// Init
+loadComments();
+</script>

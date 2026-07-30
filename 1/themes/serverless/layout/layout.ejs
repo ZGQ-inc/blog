@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title><%= page.title || config.title %></title>
+
+  <!-- 引入 MDUI 2 的原生 Web Components 框架 (零框架依赖) -->
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+  <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+
+  <!-- 引入我们自定义的液态玻璃光学 CSS -->
+  <link rel="stylesheet" href="/css/liquid-glass.css">
+</head>
+<body class="mdui-theme-auto">
+
+  <!-- 挂载隐藏的 SVG 光学管线定义 -->
+  <%- partial('partial/svg-filters') %>
+
+  <!-- 
+    核心演示：将 MDUI 2 的组件赋予 Liquid Glass 滤镜属性
+    结合了 Web Components 和 contain: strict 隔离
+  -->
+  <header>
+    <!-- MDUI 底部/顶部导航栏运用极端透视效果 -->
+    <mdui-navigation-bar class="liquid-glass-panel">
+      <mdui-navigation-bar-item icon="home">主页</mdui-navigation-bar-item>
+      <mdui-navigation-bar-item icon="library_books">技术文章</mdui-navigation-bar-item>
+      <mdui-navigation-bar-item icon="forum">TG 讨论版</mdui-navigation-bar-item>
+    </mdui-navigation-bar>
+  </header>
+
+  <main style="padding-top: 100px; /* 留出 navigation-bar 空间 */">
+    <%- body %>
+  </main>
+
+</body>
+</html>

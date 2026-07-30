@@ -1,0 +1,182 @@
+---
+title: TG 讨论区
+layout: false
+---
+<!DOCTYPE html>
+<html lang="zh-CN" class="mdui-theme-auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TG 讨论区 | <%= config.title %></title>
+  <meta name="description" content="Telegram 讨论区 — 实时同步 Telegram 群组的讨论内容">
+  <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
+  <script src="https://unpkg.com/mdui@2/mdui.global.js" defer></script>
+  <link rel="stylesheet" href="/css/liquid-glass.css">
+  <style>
+    .forum-container { max-width: 900px; margin: 96px auto 48px; padding: 0 16px; }
+    .discussion-post { cursor: pointer; }
+    .discussion-post:hover .post-slug-link { color: var(--md-sys-color-primary); }
+  </style>
+</head>
+<body class="mdui-theme-auto">
+  <%- partial('partial/svg-filters') %>
+
+  <!-- Minimal nav header -->
+  <mdui-top-app-bar class="liquid-glass-panel" scroll-behavior="elevate" scroll-target="window">
+    <mdui-button-icon icon="arrow_back--rounded" href="/" aria-label="返回主页"></mdui-button-icon>
+    <mdui-top-app-bar-title>
+      <span style="font-weight:700;">TG 讨论区</span>
+    </mdui-top-app-bar-title>
+    <div style="flex:1;"></div>
+    <span class="live-dot" style="margin-right:12px;" title="实时同步中"></span>
+    <mdui-button-icon
+      icon="refresh--rounded"
+      aria-label="刷新"
+      onclick="loadDiscussions()">
+    </mdui-button-icon>
+  </mdui-top-app-bar>
+
+  <div class="forum-container">
+
+    <!-- Forum header card -->
+    <div class="forum-header liquid-glass-card fade-in-up" style="margin-bottom:32px;">
+      <mdui-icon name="forum--rounded" style="font-size:3rem;color:var(--md-sys-color-primary);display:block;margin-bottom:12px;"></mdui-icon>
+      <h1 style="font-size:1.8rem;font-weight:700;margin:0 0 8px;">Telegram 讨论区</h1>
+      <p style="opacity:0.7;margin:0 0 16px;">来自 Telegram 群组的实时讨论，通过 Cloudflare D1 双向同步</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <% if (config.telegram_channel) { %>
+          <mdui-button href="https://t.me/<%= config.telegram_channel %>" target="_blank"
+            variant="filled" icon="telegram">
+            加入 Telegram 群组
+          </mdui-button>
+        <% } %>
+        <mdui-chip icon="sync--outlined" style="height:auto;padding:8px 16px;">
+          <span class="live-dot" style="margin-right:6px;"></span>
+          实时同步
+        </mdui-chip>
+      </div>
+    </div>
+
+    <!-- Discussion filter tabs -->
+    <mdui-tabs value="all" style="margin-bottom:24px;">
+      <mdui-tab value="all" onclick="filterDiscussions('all')">全部讨论</mdui-tab>
+      <mdui-tab value="blog" onclick="filterDiscussions('blog')">博客评论</mdui-tab>
+      <mdui-tab value="general" onclick="filterDiscussions('general')">自由讨论</mdui-tab>
+
+      <mdui-tab-panel slot="panel" value="all">
+        <div id="discussion-list" style="margin-top:16px;"></div>
+      </mdui-tab-panel>
+      <mdui-tab-panel slot="panel" value="blog">
+        <div id="discussion-list-blog" style="margin-top:16px;"></div>
+      </mdui-tab-panel>
+      <mdui-tab-panel slot="panel" value="general">
+        <div id="discussion-list-general" style="margin-top:16px;"></div>
+      </mdui-tab-panel>
+    </mdui-tabs>
+
+    <!-- Loading skeleton -->
+    <div id="forum-loading" style="display:none;">
+      <% for(let i=0;i<5;i++) { %>
+        <div style="height:80px;border-radius:12px;margin-bottom:12px;" class="skeleton"></div>
+      <% } %>
+    </div>
+
+    <!-- Empty state -->
+    <div id="forum-empty" style="display:none;text-align:center;padding:64px;opacity:0.5;">
+      <mdui-icon name="inbox--outlined" style="font-size:3rem;display:block;margin-bottom:16px;"></mdui-icon>
+      <p>暂无讨论内容</p>
+    </div>
+  </div>
+
+  <script>
+    let allDiscussions = [];
+
+    async function loadDiscussions() {
+      const loadingEl = document.getElementById('forum-loading');
+      loadingEl.style.display = 'block';
+      document.getElementById('discussion-list').innerHTML = '';
+
+      try {
+        // Fetch recent comments from all posts (general forum feed)
+        const res = await fetch('/api/twikoo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event: 'GET_COMMENTS', post_slug: 'telegram-general-discussion' })
+        });
+        const { data } = await res.json();
+        allDiscussions = data || [];
+        filterDiscussions('all');
+      } catch (err) {
+        document.getElementById('discussion-list').innerHTML =
+          '<p style="text-align:center;opacity:0.5;">加载失败，请稍后刷新</p>';
+      } finally {
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    function filterDiscussions(tab) {
+      let items = allDiscussions;
+      if (tab === 'blog') {
+        items = allDiscussions.filter(d => d.post_slug !== 'telegram-general-discussion');
+      } else if (tab === 'general') {
+        items = allDiscussions.filter(d => d.post_slug === 'telegram-general-discussion');
+      }
+
+      const listId = tab === 'all' ? 'discussion-list'
+                   : tab === 'blog' ? 'discussion-list-blog'
+                   : 'discussion-list-general';
+      const listEl = document.getElementById(listId);
+      const emptyEl = document.getElementById('forum-empty');
+
+      if (!items.length) {
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      listEl.innerHTML = items.slice(0, 50).map(item => {
+        const initials = (item.author_name || '?').charAt(0).toUpperCase();
+        const dateStr = new Date(item.created_at * 1000).toLocaleString('zh-CN',
+          { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const isGeneral = item.post_slug === 'telegram-general-discussion';
+        return `
+          <div class="forum-item liquid-glass-card discussion-post">
+            <div class="comment-avatar" style="width:40px;height:40px;flex-shrink:0;">${initials}</div>
+            <div style="min-width:0;">
+              <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px;">
+                ${escHtml(item.author_name)}
+                ${item.is_admin ? '<mdui-chip style="height:18px;font-size:0.7rem;margin-left:4px;">博主</mdui-chip>' : ''}
+              </div>
+              <div style="font-size:0.88rem;opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">
+                ${item.content.replace(/<[^>]+>/g, '').slice(0, 120)}
+              </div>
+              ${!isGeneral ? `
+                <div style="margin-top:6px;">
+                  <mdui-chip class="post-slug-link" icon="article--outlined" style="font-size:0.75rem;height:22px;"
+                    href="/${item.post_slug}">
+                    ${item.post_slug}
+                  </mdui-chip>
+                </div>
+              ` : ''}
+            </div>
+            <div style="text-align:right;font-size:0.78rem;opacity:0.5;flex-shrink:0;white-space:nowrap;">
+              ${dateStr}
+              ${item.tg_message_id ? `<br><mdui-icon name="telegram" style="font-size:12px;vertical-align:middle;opacity:0.7;"></mdui-icon>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadDiscussions();
+    // Auto-refresh every 30 seconds
+    setInterval(loadDiscussions, 30000);
+  </script>
+</body>
+</html>
